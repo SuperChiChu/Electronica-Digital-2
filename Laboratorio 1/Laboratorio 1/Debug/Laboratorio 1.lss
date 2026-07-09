@@ -1,0 +1,1325 @@
+
+Laboratorio 1.elf:     file format elf32-avr
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .data         000000d0  00800100  00000782  00000816  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  1 .text         00000782  00000000  00000000  00000094  2**1
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  2 .bss          00000015  008001d0  008001d0  000008e6  2**0
+                  ALLOC
+  3 .comment      00000030  00000000  00000000  000008e6  2**0
+                  CONTENTS, READONLY
+  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  00000918  2**2
+                  CONTENTS, READONLY
+  5 .debug_aranges 00000088  00000000  00000000  00000958  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  6 .debug_info   0000103d  00000000  00000000  000009e0  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  7 .debug_abbrev 000008bc  00000000  00000000  00001a1d  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  8 .debug_line   00000785  00000000  00000000  000022d9  2**0
+                  CONTENTS, READONLY, DEBUGGING
+  9 .debug_frame  00000170  00000000  00000000  00002a60  2**2
+                  CONTENTS, READONLY, DEBUGGING
+ 10 .debug_str    00000590  00000000  00000000  00002bd0  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 11 .debug_loc    00000785  00000000  00000000  00003160  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 12 .debug_ranges 00000078  00000000  00000000  000038e5  2**0
+                  CONTENTS, READONLY, DEBUGGING
+
+Disassembly of section .text:
+
+00000000 <__vectors>:
+   0:	0c 94 34 00 	jmp	0x68	; 0x68 <__ctors_end>
+   4:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+   8:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+   c:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  10:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  14:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  18:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  1c:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  20:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  24:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  28:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  2c:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  30:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  34:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  38:	0c 94 24 03 	jmp	0x648	; 0x648 <__vector_14>
+  3c:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  40:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  44:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  48:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  4c:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  50:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  54:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  58:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  5c:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  60:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+  64:	0c 94 5d 00 	jmp	0xba	; 0xba <__bad_interrupt>
+
+00000068 <__ctors_end>:
+  68:	11 24       	eor	r1, r1
+  6a:	1f be       	out	0x3f, r1	; 63
+  6c:	cf ef       	ldi	r28, 0xFF	; 255
+  6e:	d8 e0       	ldi	r29, 0x08	; 8
+  70:	de bf       	out	0x3e, r29	; 62
+  72:	cd bf       	out	0x3d, r28	; 61
+
+00000074 <wdt_init>:
+   critico donde normalmente se pierde la carrera contra
+   el watchdog.
+   ======================================================== */
+void wdt_init(void) __attribute__((naked)) __attribute__((section(".init3")));
+void wdt_init(void) {
+    MCUSR = 0;
+  74:	14 be       	out	0x34, r1	; 52
+		);
+	}
+	else
+	{
+        uint8_t register temp_reg;
+		__asm__ __volatile__ (
+  76:	0f b6       	in	r0, 0x3f	; 63
+  78:	f8 94       	cli
+  7a:	a8 95       	wdr
+  7c:	80 91 60 00 	lds	r24, 0x0060	; 0x800060 <__TEXT_REGION_LENGTH__+0x7f8060>
+  80:	88 61       	ori	r24, 0x18	; 24
+  82:	80 93 60 00 	sts	0x0060, r24	; 0x800060 <__TEXT_REGION_LENGTH__+0x7f8060>
+  86:	10 92 60 00 	sts	0x0060, r1	; 0x800060 <__TEXT_REGION_LENGTH__+0x7f8060>
+  8a:	0f be       	out	0x3f, r0	; 63
+
+0000008c <__do_copy_data>:
+  8c:	11 e0       	ldi	r17, 0x01	; 1
+  8e:	a0 e0       	ldi	r26, 0x00	; 0
+  90:	b1 e0       	ldi	r27, 0x01	; 1
+  92:	e2 e8       	ldi	r30, 0x82	; 130
+  94:	f7 e0       	ldi	r31, 0x07	; 7
+  96:	02 c0       	rjmp	.+4      	; 0x9c <__do_copy_data+0x10>
+  98:	05 90       	lpm	r0, Z+
+  9a:	0d 92       	st	X+, r0
+  9c:	a0 3d       	cpi	r26, 0xD0	; 208
+  9e:	b1 07       	cpc	r27, r17
+  a0:	d9 f7       	brne	.-10     	; 0x98 <__do_copy_data+0xc>
+
+000000a2 <__do_clear_bss>:
+  a2:	21 e0       	ldi	r18, 0x01	; 1
+  a4:	a0 ed       	ldi	r26, 0xD0	; 208
+  a6:	b1 e0       	ldi	r27, 0x01	; 1
+  a8:	01 c0       	rjmp	.+2      	; 0xac <.do_clear_bss_start>
+
+000000aa <.do_clear_bss_loop>:
+  aa:	1d 92       	st	X+, r1
+
+000000ac <.do_clear_bss_start>:
+  ac:	a5 3e       	cpi	r26, 0xE5	; 229
+  ae:	b2 07       	cpc	r27, r18
+  b0:	e1 f7       	brne	.-8      	; 0xaa <.do_clear_bss_loop>
+  b2:	0e 94 49 03 	call	0x692	; 0x692 <main>
+  b6:	0c 94 bf 03 	jmp	0x77e	; 0x77e <_exit>
+
+000000ba <__bad_interrupt>:
+  ba:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
+
+000000be <timer0_init>:
+
+/* ---------------- Temporizador (reemplaza a millis() de Arduino) ---------------- */
+static volatile unsigned long ticks_ms = 0;
+
+static void timer0_init(void) {
+    TCCR0A = (1 << WGM01);              /* Modo CTC */
+  be:	82 e0       	ldi	r24, 0x02	; 2
+  c0:	84 bd       	out	0x24, r24	; 36
+    TCCR0B = (1 << CS01) | (1 << CS00); /* Prescaler 64 */
+  c2:	93 e0       	ldi	r25, 0x03	; 3
+  c4:	95 bd       	out	0x25, r25	; 37
+    OCR0A  = 249;                       /* 16MHz/64/250 = 1000 Hz -> 1 ms */
+  c6:	99 ef       	ldi	r25, 0xF9	; 249
+  c8:	97 bd       	out	0x27, r25	; 39
+    TIMSK0 = (1 << OCIE0A);
+  ca:	80 93 6e 00 	sts	0x006E, r24	; 0x80006e <__TEXT_REGION_LENGTH__+0x7f806e>
+    sei();
+  ce:	78 94       	sei
+  d0:	08 95       	ret
+
+000000d2 <millis>:
+    ticks_ms++;
+}
+
+static unsigned long millis(void) {
+    unsigned long m;
+    cli();
+  d2:	f8 94       	cli
+    m = ticks_ms;
+  d4:	60 91 e1 01 	lds	r22, 0x01E1	; 0x8001e1 <ticks_ms>
+  d8:	70 91 e2 01 	lds	r23, 0x01E2	; 0x8001e2 <ticks_ms+0x1>
+  dc:	80 91 e3 01 	lds	r24, 0x01E3	; 0x8001e3 <ticks_ms+0x2>
+  e0:	90 91 e4 01 	lds	r25, 0x01E4	; 0x8001e4 <ticks_ms+0x3>
+    sei();
+  e4:	78 94       	sei
+    return m;
+}
+  e6:	08 95       	ret
+
+000000e8 <botonPresionado>:
+static uint8_t estadoEstable[3] = {1, 1, 1};
+static unsigned long lastDebounceTime[3] = {0, 0, 0};
+
+/* Devuelve 1 una sola vez, justo cuando el boton pasa de
+   no-presionado a presionado (flanco de bajada, con antirrebote real) */
+static uint8_t botonPresionado(int idx) {
+  e8:	cf 92       	push	r12
+  ea:	df 92       	push	r13
+  ec:	ef 92       	push	r14
+  ee:	ff 92       	push	r15
+  f0:	0f 93       	push	r16
+  f2:	1f 93       	push	r17
+  f4:	cf 93       	push	r28
+  f6:	8c 01       	movw	r16, r24
+    uint8_t lectura = pin_read(BOTONES[idx]);
+  f8:	fc 01       	movw	r30, r24
+  fa:	ee 0f       	add	r30, r30
+  fc:	ff 1f       	adc	r31, r31
+  fe:	eb 54       	subi	r30, 0x4B	; 75
+ 100:	fe 4f       	sbci	r31, 0xFE	; 254
+ 102:	01 90       	ld	r0, Z+
+ 104:	f0 81       	ld	r31, Z
+ 106:	e0 2d       	mov	r30, r0
+        *(p->port) &= (uint8_t)~(1 << p->bit);
+    }
+}
+
+static inline uint8_t pin_read(const Pin *p) {
+    return (uint8_t)((*(p->pin) >> p->bit) & 0x01);
+ 108:	a4 81       	ldd	r26, Z+4	; 0x04
+ 10a:	b5 81       	ldd	r27, Z+5	; 0x05
+ 10c:	8c 91       	ld	r24, X
+ 10e:	90 e0       	ldi	r25, 0x00	; 0
+ 110:	06 80       	ldd	r0, Z+6	; 0x06
+ 112:	02 c0       	rjmp	.+4      	; 0x118 <botonPresionado+0x30>
+ 114:	95 95       	asr	r25
+ 116:	87 95       	ror	r24
+ 118:	0a 94       	dec	r0
+ 11a:	e2 f7       	brpl	.-8      	; 0x114 <botonPresionado+0x2c>
+ 11c:	c8 2f       	mov	r28, r24
+ 11e:	c1 70       	andi	r28, 0x01	; 1
+   no-presionado a presionado (flanco de bajada, con antirrebote real) */
+static uint8_t botonPresionado(int idx) {
+    uint8_t lectura = pin_read(BOTONES[idx]);
+    uint8_t presionado = 0;
+
+    if (lectura != lastFlicker[idx]) {
+ 120:	f8 01       	movw	r30, r16
+ 122:	ed 5f       	subi	r30, 0xFD	; 253
+ 124:	fe 4f       	sbci	r31, 0xFE	; 254
+ 126:	80 81       	ld	r24, Z
+ 128:	8c 17       	cp	r24, r28
+ 12a:	69 f0       	breq	.+26     	; 0x146 <botonPresionado+0x5e>
+        lastDebounceTime[idx] = millis();
+ 12c:	0e 94 69 00 	call	0xd2	; 0xd2 <millis>
+ 130:	f8 01       	movw	r30, r16
+ 132:	ee 0f       	add	r30, r30
+ 134:	ff 1f       	adc	r31, r31
+ 136:	ee 0f       	add	r30, r30
+ 138:	ff 1f       	adc	r31, r31
+ 13a:	e0 53       	subi	r30, 0x30	; 48
+ 13c:	fe 4f       	sbci	r31, 0xFE	; 254
+ 13e:	60 83       	st	Z, r22
+ 140:	71 83       	std	Z+1, r23	; 0x01
+ 142:	82 83       	std	Z+2, r24	; 0x02
+ 144:	93 83       	std	Z+3, r25	; 0x03
+    }
+
+    if ((millis() - lastDebounceTime[idx]) > DEBOUNCE_MS) {
+ 146:	0e 94 69 00 	call	0xd2	; 0xd2 <millis>
+ 14a:	f8 01       	movw	r30, r16
+ 14c:	ee 0f       	add	r30, r30
+ 14e:	ff 1f       	adc	r31, r31
+ 150:	ee 0f       	add	r30, r30
+ 152:	ff 1f       	adc	r31, r31
+ 154:	e0 53       	subi	r30, 0x30	; 48
+ 156:	fe 4f       	sbci	r31, 0xFE	; 254
+ 158:	c0 80       	ld	r12, Z
+ 15a:	d1 80       	ldd	r13, Z+1	; 0x01
+ 15c:	e2 80       	ldd	r14, Z+2	; 0x02
+ 15e:	f3 80       	ldd	r15, Z+3	; 0x03
+ 160:	dc 01       	movw	r26, r24
+ 162:	cb 01       	movw	r24, r22
+ 164:	8c 19       	sub	r24, r12
+ 166:	9d 09       	sbc	r25, r13
+ 168:	ae 09       	sbc	r26, r14
+ 16a:	bf 09       	sbc	r27, r15
+ 16c:	4a 97       	sbiw	r24, 0x1a	; 26
+ 16e:	a1 05       	cpc	r26, r1
+ 170:	b1 05       	cpc	r27, r1
+ 172:	70 f0       	brcs	.+28     	; 0x190 <botonPresionado+0xa8>
+        if (lectura != estadoEstable[idx]) {
+ 174:	f8 01       	movw	r30, r16
+ 176:	e0 50       	subi	r30, 0x00	; 0
+ 178:	ff 4f       	sbci	r31, 0xFF	; 255
+ 17a:	80 81       	ld	r24, Z
+ 17c:	8c 17       	cp	r24, r28
+ 17e:	51 f0       	breq	.+20     	; 0x194 <botonPresionado+0xac>
+            estadoEstable[idx] = lectura;
+ 180:	f8 01       	movw	r30, r16
+ 182:	e0 50       	subi	r30, 0x00	; 0
+ 184:	ff 4f       	sbci	r31, 0xFF	; 255
+ 186:	c0 83       	st	Z, r28
+            if (estadoEstable[idx] == 0) {
+ 188:	cc 23       	and	r28, r28
+ 18a:	31 f0       	breq	.+12     	; 0x198 <botonPresionado+0xb0>
+
+/* Devuelve 1 una sola vez, justo cuando el boton pasa de
+   no-presionado a presionado (flanco de bajada, con antirrebote real) */
+static uint8_t botonPresionado(int idx) {
+    uint8_t lectura = pin_read(BOTONES[idx]);
+    uint8_t presionado = 0;
+ 18c:	80 e0       	ldi	r24, 0x00	; 0
+ 18e:	05 c0       	rjmp	.+10     	; 0x19a <botonPresionado+0xb2>
+ 190:	80 e0       	ldi	r24, 0x00	; 0
+ 192:	03 c0       	rjmp	.+6      	; 0x19a <botonPresionado+0xb2>
+ 194:	80 e0       	ldi	r24, 0x00	; 0
+ 196:	01 c0       	rjmp	.+2      	; 0x19a <botonPresionado+0xb2>
+
+    if ((millis() - lastDebounceTime[idx]) > DEBOUNCE_MS) {
+        if (lectura != estadoEstable[idx]) {
+            estadoEstable[idx] = lectura;
+            if (estadoEstable[idx] == 0) {
+                presionado = 1;
+ 198:	81 e0       	ldi	r24, 0x01	; 1
+            }
+        }
+    }
+
+    lastFlicker[idx] = lectura;
+ 19a:	f8 01       	movw	r30, r16
+ 19c:	ed 5f       	subi	r30, 0xFD	; 253
+ 19e:	fe 4f       	sbci	r31, 0xFE	; 254
+ 1a0:	c0 83       	st	Z, r28
+    return presionado;
+}
+ 1a2:	cf 91       	pop	r28
+ 1a4:	1f 91       	pop	r17
+ 1a6:	0f 91       	pop	r16
+ 1a8:	ff 90       	pop	r15
+ 1aa:	ef 90       	pop	r14
+ 1ac:	df 90       	pop	r13
+ 1ae:	cf 90       	pop	r12
+ 1b0:	08 95       	ret
+
+000001b2 <apagarDisplay>:
+
+/* ---------------- Display ---------------- */
+static void apagarDisplay(void) {
+    int i;
+    for (i = 0; i < 7; i++) {
+ 1b2:	20 e0       	ldi	r18, 0x00	; 0
+ 1b4:	30 e0       	ldi	r19, 0x00	; 0
+ 1b6:	1a c0       	rjmp	.+52     	; 0x1ec <apagarDisplay+0x3a>
+    *(p->port) |= (1 << p->bit);
+}
+
+static inline void pin_write(const Pin *p, uint8_t valor) {
+    if (valor) {
+        *(p->port) |= (1 << p->bit);
+ 1b8:	f9 01       	movw	r30, r18
+ 1ba:	ee 0f       	add	r30, r30
+ 1bc:	ff 1f       	adc	r31, r31
+ 1be:	ee 0f       	add	r30, r30
+ 1c0:	ff 1f       	adc	r31, r31
+ 1c2:	ee 0f       	add	r30, r30
+ 1c4:	ff 1f       	adc	r31, r31
+ 1c6:	e2 1b       	sub	r30, r18
+ 1c8:	f3 0b       	sbc	r31, r19
+ 1ca:	e4 5b       	subi	r30, 0xB4	; 180
+ 1cc:	fe 4f       	sbci	r31, 0xFE	; 254
+ 1ce:	a0 81       	ld	r26, Z
+ 1d0:	b1 81       	ldd	r27, Z+1	; 0x01
+ 1d2:	4c 91       	ld	r20, X
+ 1d4:	81 e0       	ldi	r24, 0x01	; 1
+ 1d6:	90 e0       	ldi	r25, 0x00	; 0
+ 1d8:	06 80       	ldd	r0, Z+6	; 0x06
+ 1da:	02 c0       	rjmp	.+4      	; 0x1e0 <apagarDisplay+0x2e>
+ 1dc:	88 0f       	add	r24, r24
+ 1de:	99 1f       	adc	r25, r25
+ 1e0:	0a 94       	dec	r0
+ 1e2:	e2 f7       	brpl	.-8      	; 0x1dc <apagarDisplay+0x2a>
+ 1e4:	84 2b       	or	r24, r20
+ 1e6:	8c 93       	st	X, r24
+}
+
+/* ---------------- Display ---------------- */
+static void apagarDisplay(void) {
+    int i;
+    for (i = 0; i < 7; i++) {
+ 1e8:	2f 5f       	subi	r18, 0xFF	; 255
+ 1ea:	3f 4f       	sbci	r19, 0xFF	; 255
+ 1ec:	27 30       	cpi	r18, 0x07	; 7
+ 1ee:	31 05       	cpc	r19, r1
+ 1f0:	1c f3       	brlt	.-58     	; 0x1b8 <apagarDisplay+0x6>
+        pin_write(&SEG[i], 1); /* Anodo comun: 1(HIGH) = apagado */
+    }
+}
+ 1f2:	08 95       	ret
+
+000001f4 <mostrarDigito>:
+
+static void mostrarDigito(int d) {
+    int i;
+    if (d < 0 || d > 9) {
+ 1f4:	8a 30       	cpi	r24, 0x0A	; 10
+ 1f6:	91 05       	cpc	r25, r1
+ 1f8:	08 f4       	brcc	.+2      	; 0x1fc <mostrarDigito+0x8>
+ 1fa:	4d c0       	rjmp	.+154    	; 0x296 <mostrarDigito+0xa2>
+        apagarDisplay();
+ 1fc:	0e 94 d9 00 	call	0x1b2	; 0x1b2 <apagarDisplay>
+        return;
+ 200:	08 95       	ret
+    }
+    for (i = 0; i < 7; i++) {
+        pin_write(&SEG[i], DIGITOS[d][i] ? 0 : 1); /* 0(LOW) enciende */
+ 202:	fc 01       	movw	r30, r24
+ 204:	ee 0f       	add	r30, r30
+ 206:	ff 1f       	adc	r31, r31
+ 208:	ee 0f       	add	r30, r30
+ 20a:	ff 1f       	adc	r31, r31
+ 20c:	ee 0f       	add	r30, r30
+ 20e:	ff 1f       	adc	r31, r31
+ 210:	e8 1b       	sub	r30, r24
+ 212:	f9 0b       	sbc	r31, r25
+ 214:	ea 5f       	subi	r30, 0xFA	; 250
+ 216:	fe 4f       	sbci	r31, 0xFE	; 254
+ 218:	e2 0f       	add	r30, r18
+ 21a:	f3 1f       	adc	r31, r19
+ 21c:	40 81       	ld	r20, Z
+ 21e:	44 23       	and	r20, r20
+ 220:	11 f0       	breq	.+4      	; 0x226 <mostrarDigito+0x32>
+ 222:	40 e0       	ldi	r20, 0x00	; 0
+ 224:	01 c0       	rjmp	.+2      	; 0x228 <mostrarDigito+0x34>
+ 226:	41 e0       	ldi	r20, 0x01	; 1
+    *(p->ddr)  &= (uint8_t)~(1 << p->bit);
+    *(p->port) |= (1 << p->bit);
+}
+
+static inline void pin_write(const Pin *p, uint8_t valor) {
+    if (valor) {
+ 228:	44 23       	and	r20, r20
+ 22a:	c9 f0       	breq	.+50     	; 0x25e <mostrarDigito+0x6a>
+        *(p->port) |= (1 << p->bit);
+ 22c:	f9 01       	movw	r30, r18
+ 22e:	ee 0f       	add	r30, r30
+ 230:	ff 1f       	adc	r31, r31
+ 232:	ee 0f       	add	r30, r30
+ 234:	ff 1f       	adc	r31, r31
+ 236:	ee 0f       	add	r30, r30
+ 238:	ff 1f       	adc	r31, r31
+ 23a:	e2 1b       	sub	r30, r18
+ 23c:	f3 0b       	sbc	r31, r19
+ 23e:	e4 5b       	subi	r30, 0xB4	; 180
+ 240:	fe 4f       	sbci	r31, 0xFE	; 254
+ 242:	a0 81       	ld	r26, Z
+ 244:	b1 81       	ldd	r27, Z+1	; 0x01
+ 246:	6c 91       	ld	r22, X
+ 248:	41 e0       	ldi	r20, 0x01	; 1
+ 24a:	50 e0       	ldi	r21, 0x00	; 0
+ 24c:	06 80       	ldd	r0, Z+6	; 0x06
+ 24e:	02 c0       	rjmp	.+4      	; 0x254 <mostrarDigito+0x60>
+ 250:	44 0f       	add	r20, r20
+ 252:	55 1f       	adc	r21, r21
+ 254:	0a 94       	dec	r0
+ 256:	e2 f7       	brpl	.-8      	; 0x250 <mostrarDigito+0x5c>
+ 258:	46 2b       	or	r20, r22
+ 25a:	4c 93       	st	X, r20
+ 25c:	19 c0       	rjmp	.+50     	; 0x290 <mostrarDigito+0x9c>
+    } else {
+        *(p->port) &= (uint8_t)~(1 << p->bit);
+ 25e:	f9 01       	movw	r30, r18
+ 260:	ee 0f       	add	r30, r30
+ 262:	ff 1f       	adc	r31, r31
+ 264:	ee 0f       	add	r30, r30
+ 266:	ff 1f       	adc	r31, r31
+ 268:	ee 0f       	add	r30, r30
+ 26a:	ff 1f       	adc	r31, r31
+ 26c:	e2 1b       	sub	r30, r18
+ 26e:	f3 0b       	sbc	r31, r19
+ 270:	e4 5b       	subi	r30, 0xB4	; 180
+ 272:	fe 4f       	sbci	r31, 0xFE	; 254
+ 274:	a0 81       	ld	r26, Z
+ 276:	b1 81       	ldd	r27, Z+1	; 0x01
+ 278:	6c 91       	ld	r22, X
+ 27a:	41 e0       	ldi	r20, 0x01	; 1
+ 27c:	50 e0       	ldi	r21, 0x00	; 0
+ 27e:	06 80       	ldd	r0, Z+6	; 0x06
+ 280:	02 c0       	rjmp	.+4      	; 0x286 <mostrarDigito+0x92>
+ 282:	44 0f       	add	r20, r20
+ 284:	55 1f       	adc	r21, r21
+ 286:	0a 94       	dec	r0
+ 288:	e2 f7       	brpl	.-8      	; 0x282 <mostrarDigito+0x8e>
+ 28a:	40 95       	com	r20
+ 28c:	46 23       	and	r20, r22
+ 28e:	4c 93       	st	X, r20
+    int i;
+    if (d < 0 || d > 9) {
+        apagarDisplay();
+        return;
+    }
+    for (i = 0; i < 7; i++) {
+ 290:	2f 5f       	subi	r18, 0xFF	; 255
+ 292:	3f 4f       	sbci	r19, 0xFF	; 255
+ 294:	02 c0       	rjmp	.+4      	; 0x29a <mostrarDigito+0xa6>
+ 296:	20 e0       	ldi	r18, 0x00	; 0
+ 298:	30 e0       	ldi	r19, 0x00	; 0
+ 29a:	27 30       	cpi	r18, 0x07	; 7
+ 29c:	31 05       	cpc	r19, r1
+ 29e:	0c f4       	brge	.+2      	; 0x2a2 <mostrarDigito+0xae>
+ 2a0:	b0 cf       	rjmp	.-160    	; 0x202 <mostrarDigito+0xe>
+ 2a2:	08 95       	ret
+
+000002a4 <actualizarLEDs>:
+   Contador BINARIO de 4 bits: cada LED representa un bit
+   (LED[0]=bit0/LSB ... LED[3]=bit3/MSB). El valor va de
+   0 a 15; gana quien llegue primero a 15 (1111 en binario). */
+static void actualizarLEDs(void) {
+    int i;
+    for (i = 0; i < 4; i++) {
+ 2a4:	80 e0       	ldi	r24, 0x00	; 0
+ 2a6:	90 e0       	ldi	r25, 0x00	; 0
+ 2a8:	7d c0       	rjmp	.+250    	; 0x3a4 <actualizarLEDs+0x100>
+        pin_write(&LED_P1[i], (uint8_t)((countP1 >> i) & 1));
+ 2aa:	20 91 df 01 	lds	r18, 0x01DF	; 0x8001df <countP1>
+ 2ae:	30 91 e0 01 	lds	r19, 0x01E0	; 0x8001e0 <countP1+0x1>
+ 2b2:	08 2e       	mov	r0, r24
+ 2b4:	02 c0       	rjmp	.+4      	; 0x2ba <actualizarLEDs+0x16>
+ 2b6:	35 95       	asr	r19
+ 2b8:	27 95       	ror	r18
+ 2ba:	0a 94       	dec	r0
+ 2bc:	e2 f7       	brpl	.-8      	; 0x2b6 <actualizarLEDs+0x12>
+    *(p->ddr)  &= (uint8_t)~(1 << p->bit);
+    *(p->port) |= (1 << p->bit);
+}
+
+static inline void pin_write(const Pin *p, uint8_t valor) {
+    if (valor) {
+ 2be:	20 ff       	sbrs	r18, 0
+ 2c0:	19 c0       	rjmp	.+50     	; 0x2f4 <actualizarLEDs+0x50>
+        *(p->port) |= (1 << p->bit);
+ 2c2:	fc 01       	movw	r30, r24
+ 2c4:	ee 0f       	add	r30, r30
+ 2c6:	ff 1f       	adc	r31, r31
+ 2c8:	ee 0f       	add	r30, r30
+ 2ca:	ff 1f       	adc	r31, r31
+ 2cc:	ee 0f       	add	r30, r30
+ 2ce:	ff 1f       	adc	r31, r31
+ 2d0:	e8 1b       	sub	r30, r24
+ 2d2:	f9 0b       	sbc	r31, r25
+ 2d4:	e7 56       	subi	r30, 0x67	; 103
+ 2d6:	fe 4f       	sbci	r31, 0xFE	; 254
+ 2d8:	a0 81       	ld	r26, Z
+ 2da:	b1 81       	ldd	r27, Z+1	; 0x01
+ 2dc:	4c 91       	ld	r20, X
+ 2de:	21 e0       	ldi	r18, 0x01	; 1
+ 2e0:	30 e0       	ldi	r19, 0x00	; 0
+ 2e2:	06 80       	ldd	r0, Z+6	; 0x06
+ 2e4:	02 c0       	rjmp	.+4      	; 0x2ea <actualizarLEDs+0x46>
+ 2e6:	22 0f       	add	r18, r18
+ 2e8:	33 1f       	adc	r19, r19
+ 2ea:	0a 94       	dec	r0
+ 2ec:	e2 f7       	brpl	.-8      	; 0x2e6 <actualizarLEDs+0x42>
+ 2ee:	24 2b       	or	r18, r20
+ 2f0:	2c 93       	st	X, r18
+ 2f2:	19 c0       	rjmp	.+50     	; 0x326 <actualizarLEDs+0x82>
+    } else {
+        *(p->port) &= (uint8_t)~(1 << p->bit);
+ 2f4:	fc 01       	movw	r30, r24
+ 2f6:	ee 0f       	add	r30, r30
+ 2f8:	ff 1f       	adc	r31, r31
+ 2fa:	ee 0f       	add	r30, r30
+ 2fc:	ff 1f       	adc	r31, r31
+ 2fe:	ee 0f       	add	r30, r30
+ 300:	ff 1f       	adc	r31, r31
+ 302:	e8 1b       	sub	r30, r24
+ 304:	f9 0b       	sbc	r31, r25
+ 306:	e7 56       	subi	r30, 0x67	; 103
+ 308:	fe 4f       	sbci	r31, 0xFE	; 254
+ 30a:	a0 81       	ld	r26, Z
+ 30c:	b1 81       	ldd	r27, Z+1	; 0x01
+ 30e:	4c 91       	ld	r20, X
+ 310:	21 e0       	ldi	r18, 0x01	; 1
+ 312:	30 e0       	ldi	r19, 0x00	; 0
+ 314:	06 80       	ldd	r0, Z+6	; 0x06
+ 316:	02 c0       	rjmp	.+4      	; 0x31c <actualizarLEDs+0x78>
+ 318:	22 0f       	add	r18, r18
+ 31a:	33 1f       	adc	r19, r19
+ 31c:	0a 94       	dec	r0
+ 31e:	e2 f7       	brpl	.-8      	; 0x318 <actualizarLEDs+0x74>
+ 320:	20 95       	com	r18
+ 322:	24 23       	and	r18, r20
+ 324:	2c 93       	st	X, r18
+   0 a 15; gana quien llegue primero a 15 (1111 en binario). */
+static void actualizarLEDs(void) {
+    int i;
+    for (i = 0; i < 4; i++) {
+        pin_write(&LED_P1[i], (uint8_t)((countP1 >> i) & 1));
+        pin_write(&LED_P2[i], (uint8_t)((countP2 >> i) & 1));
+ 326:	20 91 dd 01 	lds	r18, 0x01DD	; 0x8001dd <countP2>
+ 32a:	30 91 de 01 	lds	r19, 0x01DE	; 0x8001de <countP2+0x1>
+ 32e:	08 2e       	mov	r0, r24
+ 330:	02 c0       	rjmp	.+4      	; 0x336 <actualizarLEDs+0x92>
+ 332:	35 95       	asr	r19
+ 334:	27 95       	ror	r18
+ 336:	0a 94       	dec	r0
+ 338:	e2 f7       	brpl	.-8      	; 0x332 <actualizarLEDs+0x8e>
+    *(p->ddr)  &= (uint8_t)~(1 << p->bit);
+    *(p->port) |= (1 << p->bit);
+}
+
+static inline void pin_write(const Pin *p, uint8_t valor) {
+    if (valor) {
+ 33a:	20 ff       	sbrs	r18, 0
+ 33c:	19 c0       	rjmp	.+50     	; 0x370 <actualizarLEDs+0xcc>
+        *(p->port) |= (1 << p->bit);
+ 33e:	fc 01       	movw	r30, r24
+ 340:	ee 0f       	add	r30, r30
+ 342:	ff 1f       	adc	r31, r31
+ 344:	ee 0f       	add	r30, r30
+ 346:	ff 1f       	adc	r31, r31
+ 348:	ee 0f       	add	r30, r30
+ 34a:	ff 1f       	adc	r31, r31
+ 34c:	e8 1b       	sub	r30, r24
+ 34e:	f9 0b       	sbc	r31, r25
+ 350:	e3 58       	subi	r30, 0x83	; 131
+ 352:	fe 4f       	sbci	r31, 0xFE	; 254
+ 354:	a0 81       	ld	r26, Z
+ 356:	b1 81       	ldd	r27, Z+1	; 0x01
+ 358:	4c 91       	ld	r20, X
+ 35a:	21 e0       	ldi	r18, 0x01	; 1
+ 35c:	30 e0       	ldi	r19, 0x00	; 0
+ 35e:	06 80       	ldd	r0, Z+6	; 0x06
+ 360:	02 c0       	rjmp	.+4      	; 0x366 <actualizarLEDs+0xc2>
+ 362:	22 0f       	add	r18, r18
+ 364:	33 1f       	adc	r19, r19
+ 366:	0a 94       	dec	r0
+ 368:	e2 f7       	brpl	.-8      	; 0x362 <actualizarLEDs+0xbe>
+ 36a:	24 2b       	or	r18, r20
+ 36c:	2c 93       	st	X, r18
+ 36e:	19 c0       	rjmp	.+50     	; 0x3a2 <actualizarLEDs+0xfe>
+    } else {
+        *(p->port) &= (uint8_t)~(1 << p->bit);
+ 370:	fc 01       	movw	r30, r24
+ 372:	ee 0f       	add	r30, r30
+ 374:	ff 1f       	adc	r31, r31
+ 376:	ee 0f       	add	r30, r30
+ 378:	ff 1f       	adc	r31, r31
+ 37a:	ee 0f       	add	r30, r30
+ 37c:	ff 1f       	adc	r31, r31
+ 37e:	e8 1b       	sub	r30, r24
+ 380:	f9 0b       	sbc	r31, r25
+ 382:	e3 58       	subi	r30, 0x83	; 131
+ 384:	fe 4f       	sbci	r31, 0xFE	; 254
+ 386:	a0 81       	ld	r26, Z
+ 388:	b1 81       	ldd	r27, Z+1	; 0x01
+ 38a:	4c 91       	ld	r20, X
+ 38c:	21 e0       	ldi	r18, 0x01	; 1
+ 38e:	30 e0       	ldi	r19, 0x00	; 0
+ 390:	06 80       	ldd	r0, Z+6	; 0x06
+ 392:	02 c0       	rjmp	.+4      	; 0x398 <actualizarLEDs+0xf4>
+ 394:	22 0f       	add	r18, r18
+ 396:	33 1f       	adc	r19, r19
+ 398:	0a 94       	dec	r0
+ 39a:	e2 f7       	brpl	.-8      	; 0x394 <actualizarLEDs+0xf0>
+ 39c:	20 95       	com	r18
+ 39e:	24 23       	and	r18, r20
+ 3a0:	2c 93       	st	X, r18
+   Contador BINARIO de 4 bits: cada LED representa un bit
+   (LED[0]=bit0/LSB ... LED[3]=bit3/MSB). El valor va de
+   0 a 15; gana quien llegue primero a 15 (1111 en binario). */
+static void actualizarLEDs(void) {
+    int i;
+    for (i = 0; i < 4; i++) {
+ 3a2:	01 96       	adiw	r24, 0x01	; 1
+ 3a4:	84 30       	cpi	r24, 0x04	; 4
+ 3a6:	91 05       	cpc	r25, r1
+ 3a8:	0c f4       	brge	.+2      	; 0x3ac <actualizarLEDs+0x108>
+ 3aa:	7f cf       	rjmp	.-258    	; 0x2aa <actualizarLEDs+0x6>
+        pin_write(&LED_P1[i], (uint8_t)((countP1 >> i) & 1));
+        pin_write(&LED_P2[i], (uint8_t)((countP2 >> i) & 1));
+    }
+}
+ 3ac:	08 95       	ret
+
+000003ae <apagarLEDs>:
+
+static void apagarLEDs(void) {
+ 3ae:	cf 93       	push	r28
+ 3b0:	df 93       	push	r29
+    int i;
+    for (i = 0; i < 4; i++) {
+ 3b2:	40 e0       	ldi	r20, 0x00	; 0
+ 3b4:	50 e0       	ldi	r21, 0x00	; 0
+ 3b6:	2b c0       	rjmp	.+86     	; 0x40e <__EEPROM_REGION_LENGTH__+0xe>
+
+static inline void pin_write(const Pin *p, uint8_t valor) {
+    if (valor) {
+        *(p->port) |= (1 << p->bit);
+    } else {
+        *(p->port) &= (uint8_t)~(1 << p->bit);
+ 3b8:	fa 01       	movw	r30, r20
+ 3ba:	ee 0f       	add	r30, r30
+ 3bc:	ff 1f       	adc	r31, r31
+ 3be:	ee 0f       	add	r30, r30
+ 3c0:	ff 1f       	adc	r31, r31
+ 3c2:	ee 0f       	add	r30, r30
+ 3c4:	ff 1f       	adc	r31, r31
+ 3c6:	e4 1b       	sub	r30, r20
+ 3c8:	f5 0b       	sbc	r31, r21
+ 3ca:	ef 01       	movw	r28, r30
+ 3cc:	c7 56       	subi	r28, 0x67	; 103
+ 3ce:	de 4f       	sbci	r29, 0xFE	; 254
+ 3d0:	a8 81       	ld	r26, Y
+ 3d2:	b9 81       	ldd	r27, Y+1	; 0x01
+ 3d4:	6c 91       	ld	r22, X
+ 3d6:	81 e0       	ldi	r24, 0x01	; 1
+ 3d8:	90 e0       	ldi	r25, 0x00	; 0
+ 3da:	9c 01       	movw	r18, r24
+ 3dc:	0e 80       	ldd	r0, Y+6	; 0x06
+ 3de:	02 c0       	rjmp	.+4      	; 0x3e4 <apagarLEDs+0x36>
+ 3e0:	22 0f       	add	r18, r18
+ 3e2:	33 1f       	adc	r19, r19
+ 3e4:	0a 94       	dec	r0
+ 3e6:	e2 f7       	brpl	.-8      	; 0x3e0 <apagarLEDs+0x32>
+ 3e8:	20 95       	com	r18
+ 3ea:	26 23       	and	r18, r22
+ 3ec:	2c 93       	st	X, r18
+ 3ee:	e3 58       	subi	r30, 0x83	; 131
+ 3f0:	fe 4f       	sbci	r31, 0xFE	; 254
+ 3f2:	a0 81       	ld	r26, Z
+ 3f4:	b1 81       	ldd	r27, Z+1	; 0x01
+ 3f6:	2c 91       	ld	r18, X
+ 3f8:	06 80       	ldd	r0, Z+6	; 0x06
+ 3fa:	02 c0       	rjmp	.+4      	; 0x400 <__EEPROM_REGION_LENGTH__>
+ 3fc:	88 0f       	add	r24, r24
+ 3fe:	99 1f       	adc	r25, r25
+ 400:	0a 94       	dec	r0
+ 402:	e2 f7       	brpl	.-8      	; 0x3fc <apagarLEDs+0x4e>
+ 404:	80 95       	com	r24
+ 406:	82 23       	and	r24, r18
+ 408:	8c 93       	st	X, r24
+    }
+}
+
+static void apagarLEDs(void) {
+    int i;
+    for (i = 0; i < 4; i++) {
+ 40a:	4f 5f       	subi	r20, 0xFF	; 255
+ 40c:	5f 4f       	sbci	r21, 0xFF	; 255
+ 40e:	44 30       	cpi	r20, 0x04	; 4
+ 410:	51 05       	cpc	r21, r1
+ 412:	94 f2       	brlt	.-92     	; 0x3b8 <apagarLEDs+0xa>
+        pin_write(&LED_P1[i], 0);
+        pin_write(&LED_P2[i], 0);
+    }
+}
+ 414:	df 91       	pop	r29
+ 416:	cf 91       	pop	r28
+ 418:	08 95       	ret
+
+0000041a <reiniciarRonda>:
+    mostrarDigito(jugador); /* deja fijo el numero del ganador */
+}
+
+/* ---------------- Reinicio ---------------- */
+static void reiniciarRonda(void) {
+    countP1 = 0;
+ 41a:	10 92 e0 01 	sts	0x01E0, r1	; 0x8001e0 <countP1+0x1>
+ 41e:	10 92 df 01 	sts	0x01DF, r1	; 0x8001df <countP1>
+    countP2 = 0;
+ 422:	10 92 de 01 	sts	0x01DE, r1	; 0x8001de <countP2+0x1>
+ 426:	10 92 dd 01 	sts	0x01DD, r1	; 0x8001dd <countP2>
+    apagarLEDs();
+ 42a:	0e 94 d7 01 	call	0x3ae	; 0x3ae <apagarLEDs>
+    apagarDisplay();
+ 42e:	0e 94 d9 00 	call	0x1b2	; 0x1b2 <apagarDisplay>
+    estado = ESPERA;
+ 432:	10 92 dc 01 	sts	0x01DC, r1	; 0x8001dc <estado>
+ 436:	08 95       	ret
+
+00000438 <inicializarPines>:
+}
+
+/* ---------------- Inicializacion de pines ---------------- */
+static void inicializarPines(void) {
+ 438:	cf 93       	push	r28
+ 43a:	df 93       	push	r29
+static inline void pin_output(const Pin *p) {
+    *(p->ddr) |= (1 << p->bit);
+}
+
+static inline void pin_input_pullup(const Pin *p) {
+    *(p->ddr)  &= (uint8_t)~(1 << p->bit);
+ 43c:	87 b1       	in	r24, 0x07	; 7
+ 43e:	8e 7f       	andi	r24, 0xFE	; 254
+ 440:	87 b9       	out	0x07, r24	; 7
+    *(p->port) |= (1 << p->bit);
+ 442:	88 b1       	in	r24, 0x08	; 8
+ 444:	81 60       	ori	r24, 0x01	; 1
+ 446:	88 b9       	out	0x08, r24	; 8
+static inline void pin_output(const Pin *p) {
+    *(p->ddr) |= (1 << p->bit);
+}
+
+static inline void pin_input_pullup(const Pin *p) {
+    *(p->ddr)  &= (uint8_t)~(1 << p->bit);
+ 448:	87 b1       	in	r24, 0x07	; 7
+ 44a:	8d 7f       	andi	r24, 0xFD	; 253
+ 44c:	87 b9       	out	0x07, r24	; 7
+    *(p->port) |= (1 << p->bit);
+ 44e:	88 b1       	in	r24, 0x08	; 8
+ 450:	82 60       	ori	r24, 0x02	; 2
+ 452:	88 b9       	out	0x08, r24	; 8
+static inline void pin_output(const Pin *p) {
+    *(p->ddr) |= (1 << p->bit);
+}
+
+static inline void pin_input_pullup(const Pin *p) {
+    *(p->ddr)  &= (uint8_t)~(1 << p->bit);
+ 454:	87 b1       	in	r24, 0x07	; 7
+ 456:	8b 7f       	andi	r24, 0xFB	; 251
+ 458:	87 b9       	out	0x07, r24	; 7
+    *(p->port) |= (1 << p->bit);
+ 45a:	88 b1       	in	r24, 0x08	; 8
+ 45c:	84 60       	ori	r24, 0x04	; 4
+ 45e:	88 b9       	out	0x08, r24	; 8
+
+    pin_input_pullup(&BOTON_INICIO);
+    pin_input_pullup(&BOTON_P1);
+    pin_input_pullup(&BOTON_P2);
+
+    for (i = 0; i < 4; i++) {
+ 460:	20 e0       	ldi	r18, 0x00	; 0
+ 462:	30 e0       	ldi	r19, 0x00	; 0
+ 464:	29 c0       	rjmp	.+82     	; 0x4b8 <inicializarPines+0x80>
+    {1,1,1,1,0,1,1}  /* 9 */
+};
+
+/* ---------------- Funciones basicas de pines (reemplazan a Arduino.h) ---------------- */
+static inline void pin_output(const Pin *p) {
+    *(p->ddr) |= (1 << p->bit);
+ 466:	f9 01       	movw	r30, r18
+ 468:	ee 0f       	add	r30, r30
+ 46a:	ff 1f       	adc	r31, r31
+ 46c:	ee 0f       	add	r30, r30
+ 46e:	ff 1f       	adc	r31, r31
+ 470:	ee 0f       	add	r30, r30
+ 472:	ff 1f       	adc	r31, r31
+ 474:	e2 1b       	sub	r30, r18
+ 476:	f3 0b       	sbc	r31, r19
+ 478:	ef 01       	movw	r28, r30
+ 47a:	c7 56       	subi	r28, 0x67	; 103
+ 47c:	de 4f       	sbci	r29, 0xFE	; 254
+ 47e:	aa 81       	ldd	r26, Y+2	; 0x02
+ 480:	bb 81       	ldd	r27, Y+3	; 0x03
+ 482:	6c 91       	ld	r22, X
+ 484:	81 e0       	ldi	r24, 0x01	; 1
+ 486:	90 e0       	ldi	r25, 0x00	; 0
+ 488:	ac 01       	movw	r20, r24
+ 48a:	0e 80       	ldd	r0, Y+6	; 0x06
+ 48c:	02 c0       	rjmp	.+4      	; 0x492 <inicializarPines+0x5a>
+ 48e:	44 0f       	add	r20, r20
+ 490:	55 1f       	adc	r21, r21
+ 492:	0a 94       	dec	r0
+ 494:	e2 f7       	brpl	.-8      	; 0x48e <inicializarPines+0x56>
+ 496:	46 2b       	or	r20, r22
+ 498:	4c 93       	st	X, r20
+ 49a:	e3 58       	subi	r30, 0x83	; 131
+ 49c:	fe 4f       	sbci	r31, 0xFE	; 254
+ 49e:	a2 81       	ldd	r26, Z+2	; 0x02
+ 4a0:	b3 81       	ldd	r27, Z+3	; 0x03
+ 4a2:	4c 91       	ld	r20, X
+ 4a4:	06 80       	ldd	r0, Z+6	; 0x06
+ 4a6:	02 c0       	rjmp	.+4      	; 0x4ac <inicializarPines+0x74>
+ 4a8:	88 0f       	add	r24, r24
+ 4aa:	99 1f       	adc	r25, r25
+ 4ac:	0a 94       	dec	r0
+ 4ae:	e2 f7       	brpl	.-8      	; 0x4a8 <inicializarPines+0x70>
+ 4b0:	84 2b       	or	r24, r20
+ 4b2:	8c 93       	st	X, r24
+
+    pin_input_pullup(&BOTON_INICIO);
+    pin_input_pullup(&BOTON_P1);
+    pin_input_pullup(&BOTON_P2);
+
+    for (i = 0; i < 4; i++) {
+ 4b4:	2f 5f       	subi	r18, 0xFF	; 255
+ 4b6:	3f 4f       	sbci	r19, 0xFF	; 255
+ 4b8:	24 30       	cpi	r18, 0x04	; 4
+ 4ba:	31 05       	cpc	r19, r1
+ 4bc:	a4 f2       	brlt	.-88     	; 0x466 <inicializarPines+0x2e>
+ 4be:	20 e0       	ldi	r18, 0x00	; 0
+ 4c0:	30 e0       	ldi	r19, 0x00	; 0
+ 4c2:	1a c0       	rjmp	.+52     	; 0x4f8 <inicializarPines+0xc0>
+    {1,1,1,1,0,1,1}  /* 9 */
+};
+
+/* ---------------- Funciones basicas de pines (reemplazan a Arduino.h) ---------------- */
+static inline void pin_output(const Pin *p) {
+    *(p->ddr) |= (1 << p->bit);
+ 4c4:	f9 01       	movw	r30, r18
+ 4c6:	ee 0f       	add	r30, r30
+ 4c8:	ff 1f       	adc	r31, r31
+ 4ca:	ee 0f       	add	r30, r30
+ 4cc:	ff 1f       	adc	r31, r31
+ 4ce:	ee 0f       	add	r30, r30
+ 4d0:	ff 1f       	adc	r31, r31
+ 4d2:	e2 1b       	sub	r30, r18
+ 4d4:	f3 0b       	sbc	r31, r19
+ 4d6:	e4 5b       	subi	r30, 0xB4	; 180
+ 4d8:	fe 4f       	sbci	r31, 0xFE	; 254
+ 4da:	a2 81       	ldd	r26, Z+2	; 0x02
+ 4dc:	b3 81       	ldd	r27, Z+3	; 0x03
+ 4de:	4c 91       	ld	r20, X
+ 4e0:	81 e0       	ldi	r24, 0x01	; 1
+ 4e2:	90 e0       	ldi	r25, 0x00	; 0
+ 4e4:	06 80       	ldd	r0, Z+6	; 0x06
+ 4e6:	02 c0       	rjmp	.+4      	; 0x4ec <inicializarPines+0xb4>
+ 4e8:	88 0f       	add	r24, r24
+ 4ea:	99 1f       	adc	r25, r25
+ 4ec:	0a 94       	dec	r0
+ 4ee:	e2 f7       	brpl	.-8      	; 0x4e8 <inicializarPines+0xb0>
+ 4f0:	84 2b       	or	r24, r20
+ 4f2:	8c 93       	st	X, r24
+
+    for (i = 0; i < 4; i++) {
+        pin_output(&LED_P1[i]);
+        pin_output(&LED_P2[i]);
+    }
+    for (i = 0; i < 7; i++) {
+ 4f4:	2f 5f       	subi	r18, 0xFF	; 255
+ 4f6:	3f 4f       	sbci	r19, 0xFF	; 255
+ 4f8:	27 30       	cpi	r18, 0x07	; 7
+ 4fa:	31 05       	cpc	r19, r1
+ 4fc:	1c f3       	brlt	.-58     	; 0x4c4 <inicializarPines+0x8c>
+        pin_output(&SEG[i]);
+    }
+
+    apagarLEDs();
+ 4fe:	0e 94 d7 01 	call	0x3ae	; 0x3ae <apagarLEDs>
+    apagarDisplay();
+ 502:	0e 94 d9 00 	call	0x1b2	; 0x1b2 <apagarDisplay>
+}
+ 506:	df 91       	pop	r29
+ 508:	cf 91       	pop	r28
+ 50a:	08 95       	ret
+
+0000050c <cuentaRegresiva>:
+        pin_write(&LED_P2[i], 0);
+    }
+}
+
+/* ---------------- Cuenta regresiva ---------------- */
+static void cuentaRegresiva(void) {
+ 50c:	cf 93       	push	r28
+ 50e:	df 93       	push	r29
+    int n;
+    for (n = 3; n >= 1; n--) {
+ 510:	c3 e0       	ldi	r28, 0x03	; 3
+ 512:	d0 e0       	ldi	r29, 0x00	; 0
+ 514:	0d c0       	rjmp	.+26     	; 0x530 <cuentaRegresiva+0x24>
+        mostrarDigito(n);
+ 516:	ce 01       	movw	r24, r28
+ 518:	0e 94 fa 00 	call	0x1f4	; 0x1f4 <mostrarDigito>
+	#else
+		//round up by default
+		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+	#endif
+
+	__builtin_avr_delay_cycles(__ticks_dc);
+ 51c:	2f ef       	ldi	r18, 0xFF	; 255
+ 51e:	83 ed       	ldi	r24, 0xD3	; 211
+ 520:	90 e3       	ldi	r25, 0x30	; 48
+ 522:	21 50       	subi	r18, 0x01	; 1
+ 524:	80 40       	sbci	r24, 0x00	; 0
+ 526:	90 40       	sbci	r25, 0x00	; 0
+ 528:	e1 f7       	brne	.-8      	; 0x522 <cuentaRegresiva+0x16>
+ 52a:	00 c0       	rjmp	.+0      	; 0x52c <cuentaRegresiva+0x20>
+ 52c:	00 00       	nop
+}
+
+/* ---------------- Cuenta regresiva ---------------- */
+static void cuentaRegresiva(void) {
+    int n;
+    for (n = 3; n >= 1; n--) {
+ 52e:	21 97       	sbiw	r28, 0x01	; 1
+ 530:	1c 16       	cp	r1, r28
+ 532:	1d 06       	cpc	r1, r29
+ 534:	84 f3       	brlt	.-32     	; 0x516 <cuentaRegresiva+0xa>
+        mostrarDigito(n);
+        _delay_ms(1000);
+    }
+    mostrarDigito(0);
+ 536:	80 e0       	ldi	r24, 0x00	; 0
+ 538:	90 e0       	ldi	r25, 0x00	; 0
+ 53a:	0e 94 fa 00 	call	0x1f4	; 0x1f4 <mostrarDigito>
+ 53e:	2f ef       	ldi	r18, 0xFF	; 255
+ 540:	87 e8       	ldi	r24, 0x87	; 135
+ 542:	93 e1       	ldi	r25, 0x13	; 19
+ 544:	21 50       	subi	r18, 0x01	; 1
+ 546:	80 40       	sbci	r24, 0x00	; 0
+ 548:	90 40       	sbci	r25, 0x00	; 0
+ 54a:	e1 f7       	brne	.-8      	; 0x544 <cuentaRegresiva+0x38>
+ 54c:	00 c0       	rjmp	.+0      	; 0x54e <cuentaRegresiva+0x42>
+ 54e:	00 00       	nop
+    _delay_ms(400);
+    apagarDisplay();
+ 550:	0e 94 d9 00 	call	0x1b2	; 0x1b2 <apagarDisplay>
+}
+ 554:	df 91       	pop	r29
+ 556:	cf 91       	pop	r28
+ 558:	08 95       	ret
+
+0000055a <mostrarGanador>:
+
+/* ---------------- Mostrar ganador ---------------- */
+static void mostrarGanador(int jugador) {
+ 55a:	0f 93       	push	r16
+ 55c:	1f 93       	push	r17
+ 55e:	cf 93       	push	r28
+ 560:	df 93       	push	r29
+ 562:	8c 01       	movw	r16, r24
+    int rep, i;
+    estado = FIN;
+ 564:	83 e0       	ldi	r24, 0x03	; 3
+ 566:	80 93 dc 01 	sts	0x01DC, r24	; 0x8001dc <estado>
+    apagarLEDs();
+ 56a:	0e 94 d7 01 	call	0x3ae	; 0x3ae <apagarLEDs>
+
+    for (rep = 0; rep < 8; rep++) {
+ 56e:	c0 e0       	ldi	r28, 0x00	; 0
+ 570:	d0 e0       	ldi	r29, 0x00	; 0
+ 572:	5e c0       	rjmp	.+188    	; 0x630 <mostrarGanador+0xd6>
+        mostrarDigito(jugador);
+ 574:	c8 01       	movw	r24, r16
+ 576:	0e 94 fa 00 	call	0x1f4	; 0x1f4 <mostrarDigito>
+        if (jugador == 1) {
+ 57a:	01 30       	cpi	r16, 0x01	; 1
+ 57c:	11 05       	cpc	r17, r1
+ 57e:	f1 f0       	breq	.+60     	; 0x5bc <mostrarGanador+0x62>
+ 580:	20 e0       	ldi	r18, 0x00	; 0
+ 582:	30 e0       	ldi	r19, 0x00	; 0
+ 584:	3b c0       	rjmp	.+118    	; 0x5fc <mostrarGanador+0xa2>
+    *(p->port) |= (1 << p->bit);
+}
+
+static inline void pin_write(const Pin *p, uint8_t valor) {
+    if (valor) {
+        *(p->port) |= (1 << p->bit);
+ 586:	f9 01       	movw	r30, r18
+ 588:	ee 0f       	add	r30, r30
+ 58a:	ff 1f       	adc	r31, r31
+ 58c:	ee 0f       	add	r30, r30
+ 58e:	ff 1f       	adc	r31, r31
+ 590:	ee 0f       	add	r30, r30
+ 592:	ff 1f       	adc	r31, r31
+ 594:	e2 1b       	sub	r30, r18
+ 596:	f3 0b       	sbc	r31, r19
+ 598:	e7 56       	subi	r30, 0x67	; 103
+ 59a:	fe 4f       	sbci	r31, 0xFE	; 254
+ 59c:	a0 81       	ld	r26, Z
+ 59e:	b1 81       	ldd	r27, Z+1	; 0x01
+ 5a0:	4c 91       	ld	r20, X
+ 5a2:	81 e0       	ldi	r24, 0x01	; 1
+ 5a4:	90 e0       	ldi	r25, 0x00	; 0
+ 5a6:	06 80       	ldd	r0, Z+6	; 0x06
+ 5a8:	02 c0       	rjmp	.+4      	; 0x5ae <mostrarGanador+0x54>
+ 5aa:	88 0f       	add	r24, r24
+ 5ac:	99 1f       	adc	r25, r25
+ 5ae:	0a 94       	dec	r0
+ 5b0:	e2 f7       	brpl	.-8      	; 0x5aa <mostrarGanador+0x50>
+ 5b2:	84 2b       	or	r24, r20
+ 5b4:	8c 93       	st	X, r24
+    apagarLEDs();
+
+    for (rep = 0; rep < 8; rep++) {
+        mostrarDigito(jugador);
+        if (jugador == 1) {
+            for (i = 0; i < 4; i++) pin_write(&LED_P1[i], 1);
+ 5b6:	2f 5f       	subi	r18, 0xFF	; 255
+ 5b8:	3f 4f       	sbci	r19, 0xFF	; 255
+ 5ba:	02 c0       	rjmp	.+4      	; 0x5c0 <mostrarGanador+0x66>
+ 5bc:	20 e0       	ldi	r18, 0x00	; 0
+ 5be:	30 e0       	ldi	r19, 0x00	; 0
+ 5c0:	24 30       	cpi	r18, 0x04	; 4
+ 5c2:	31 05       	cpc	r19, r1
+ 5c4:	04 f3       	brlt	.-64     	; 0x586 <mostrarGanador+0x2c>
+ 5c6:	1d c0       	rjmp	.+58     	; 0x602 <mostrarGanador+0xa8>
+    *(p->port) |= (1 << p->bit);
+}
+
+static inline void pin_write(const Pin *p, uint8_t valor) {
+    if (valor) {
+        *(p->port) |= (1 << p->bit);
+ 5c8:	f9 01       	movw	r30, r18
+ 5ca:	ee 0f       	add	r30, r30
+ 5cc:	ff 1f       	adc	r31, r31
+ 5ce:	ee 0f       	add	r30, r30
+ 5d0:	ff 1f       	adc	r31, r31
+ 5d2:	ee 0f       	add	r30, r30
+ 5d4:	ff 1f       	adc	r31, r31
+ 5d6:	e2 1b       	sub	r30, r18
+ 5d8:	f3 0b       	sbc	r31, r19
+ 5da:	e3 58       	subi	r30, 0x83	; 131
+ 5dc:	fe 4f       	sbci	r31, 0xFE	; 254
+ 5de:	a0 81       	ld	r26, Z
+ 5e0:	b1 81       	ldd	r27, Z+1	; 0x01
+ 5e2:	4c 91       	ld	r20, X
+ 5e4:	81 e0       	ldi	r24, 0x01	; 1
+ 5e6:	90 e0       	ldi	r25, 0x00	; 0
+ 5e8:	06 80       	ldd	r0, Z+6	; 0x06
+ 5ea:	02 c0       	rjmp	.+4      	; 0x5f0 <mostrarGanador+0x96>
+ 5ec:	88 0f       	add	r24, r24
+ 5ee:	99 1f       	adc	r25, r25
+ 5f0:	0a 94       	dec	r0
+ 5f2:	e2 f7       	brpl	.-8      	; 0x5ec <mostrarGanador+0x92>
+ 5f4:	84 2b       	or	r24, r20
+ 5f6:	8c 93       	st	X, r24
+    for (rep = 0; rep < 8; rep++) {
+        mostrarDigito(jugador);
+        if (jugador == 1) {
+            for (i = 0; i < 4; i++) pin_write(&LED_P1[i], 1);
+        } else {
+            for (i = 0; i < 4; i++) pin_write(&LED_P2[i], 1);
+ 5f8:	2f 5f       	subi	r18, 0xFF	; 255
+ 5fa:	3f 4f       	sbci	r19, 0xFF	; 255
+ 5fc:	24 30       	cpi	r18, 0x04	; 4
+ 5fe:	31 05       	cpc	r19, r1
+ 600:	1c f3       	brlt	.-58     	; 0x5c8 <mostrarGanador+0x6e>
+ 602:	2f ef       	ldi	r18, 0xFF	; 255
+ 604:	84 e3       	ldi	r24, 0x34	; 52
+ 606:	9c e0       	ldi	r25, 0x0C	; 12
+ 608:	21 50       	subi	r18, 0x01	; 1
+ 60a:	80 40       	sbci	r24, 0x00	; 0
+ 60c:	90 40       	sbci	r25, 0x00	; 0
+ 60e:	e1 f7       	brne	.-8      	; 0x608 <mostrarGanador+0xae>
+ 610:	00 c0       	rjmp	.+0      	; 0x612 <mostrarGanador+0xb8>
+ 612:	00 00       	nop
+        }
+        _delay_ms(250);
+
+        apagarDisplay();
+ 614:	0e 94 d9 00 	call	0x1b2	; 0x1b2 <apagarDisplay>
+        apagarLEDs();
+ 618:	0e 94 d7 01 	call	0x3ae	; 0x3ae <apagarLEDs>
+ 61c:	2f ef       	ldi	r18, 0xFF	; 255
+ 61e:	84 e3       	ldi	r24, 0x34	; 52
+ 620:	9c e0       	ldi	r25, 0x0C	; 12
+ 622:	21 50       	subi	r18, 0x01	; 1
+ 624:	80 40       	sbci	r24, 0x00	; 0
+ 626:	90 40       	sbci	r25, 0x00	; 0
+ 628:	e1 f7       	brne	.-8      	; 0x622 <mostrarGanador+0xc8>
+ 62a:	00 c0       	rjmp	.+0      	; 0x62c <mostrarGanador+0xd2>
+ 62c:	00 00       	nop
+static void mostrarGanador(int jugador) {
+    int rep, i;
+    estado = FIN;
+    apagarLEDs();
+
+    for (rep = 0; rep < 8; rep++) {
+ 62e:	21 96       	adiw	r28, 0x01	; 1
+ 630:	c8 30       	cpi	r28, 0x08	; 8
+ 632:	d1 05       	cpc	r29, r1
+ 634:	0c f4       	brge	.+2      	; 0x638 <mostrarGanador+0xde>
+ 636:	9e cf       	rjmp	.-196    	; 0x574 <mostrarGanador+0x1a>
+        apagarDisplay();
+        apagarLEDs();
+        _delay_ms(250);
+    }
+
+    mostrarDigito(jugador); /* deja fijo el numero del ganador */
+ 638:	c8 01       	movw	r24, r16
+ 63a:	0e 94 fa 00 	call	0x1f4	; 0x1f4 <mostrarDigito>
+}
+ 63e:	df 91       	pop	r29
+ 640:	cf 91       	pop	r28
+ 642:	1f 91       	pop	r17
+ 644:	0f 91       	pop	r16
+ 646:	08 95       	ret
+
+00000648 <__vector_14>:
+    OCR0A  = 249;                       /* 16MHz/64/250 = 1000 Hz -> 1 ms */
+    TIMSK0 = (1 << OCIE0A);
+    sei();
+}
+
+ISR(TIMER0_COMPA_vect) {
+ 648:	1f 92       	push	r1
+ 64a:	0f 92       	push	r0
+ 64c:	0f b6       	in	r0, 0x3f	; 63
+ 64e:	0f 92       	push	r0
+ 650:	11 24       	eor	r1, r1
+ 652:	8f 93       	push	r24
+ 654:	9f 93       	push	r25
+ 656:	af 93       	push	r26
+ 658:	bf 93       	push	r27
+    ticks_ms++;
+ 65a:	80 91 e1 01 	lds	r24, 0x01E1	; 0x8001e1 <ticks_ms>
+ 65e:	90 91 e2 01 	lds	r25, 0x01E2	; 0x8001e2 <ticks_ms+0x1>
+ 662:	a0 91 e3 01 	lds	r26, 0x01E3	; 0x8001e3 <ticks_ms+0x2>
+ 666:	b0 91 e4 01 	lds	r27, 0x01E4	; 0x8001e4 <ticks_ms+0x3>
+ 66a:	01 96       	adiw	r24, 0x01	; 1
+ 66c:	a1 1d       	adc	r26, r1
+ 66e:	b1 1d       	adc	r27, r1
+ 670:	80 93 e1 01 	sts	0x01E1, r24	; 0x8001e1 <ticks_ms>
+ 674:	90 93 e2 01 	sts	0x01E2, r25	; 0x8001e2 <ticks_ms+0x1>
+ 678:	a0 93 e3 01 	sts	0x01E3, r26	; 0x8001e3 <ticks_ms+0x2>
+ 67c:	b0 93 e4 01 	sts	0x01E4, r27	; 0x8001e4 <ticks_ms+0x3>
+}
+ 680:	bf 91       	pop	r27
+ 682:	af 91       	pop	r26
+ 684:	9f 91       	pop	r25
+ 686:	8f 91       	pop	r24
+ 688:	0f 90       	pop	r0
+ 68a:	0f be       	out	0x3f, r0	; 63
+ 68c:	0f 90       	pop	r0
+ 68e:	1f 90       	pop	r1
+ 690:	18 95       	reti
+
+00000692 <main>:
+    apagarDisplay();
+}
+
+/* ================== MAIN ================== */
+int main(void) {
+    timer0_init();
+ 692:	0e 94 5f 00 	call	0xbe	; 0xbe <timer0_init>
+    inicializarPines();
+ 696:	0e 94 1c 02 	call	0x438	; 0x438 <inicializarPines>
+
+    for (;;) {
+        switch (estado) {
+ 69a:	80 91 dc 01 	lds	r24, 0x01DC	; 0x8001dc <estado>
+ 69e:	81 30       	cpi	r24, 0x01	; 1
+ 6a0:	89 f0       	breq	.+34     	; 0x6c4 <main+0x32>
+ 6a2:	30 f0       	brcs	.+12     	; 0x6b0 <main+0x1e>
+ 6a4:	82 30       	cpi	r24, 0x02	; 2
+ 6a6:	f1 f0       	breq	.+60     	; 0x6e4 <main+0x52>
+ 6a8:	83 30       	cpi	r24, 0x03	; 3
+ 6aa:	09 f4       	brne	.+2      	; 0x6ae <main+0x1c>
+ 6ac:	5e c0       	rjmp	.+188    	; 0x76a <main+0xd8>
+ 6ae:	f5 cf       	rjmp	.-22     	; 0x69a <main+0x8>
+
+        case ESPERA:
+            if (botonPresionado(0)) { /* boton INICIO */
+ 6b0:	80 e0       	ldi	r24, 0x00	; 0
+ 6b2:	90 e0       	ldi	r25, 0x00	; 0
+ 6b4:	0e 94 74 00 	call	0xe8	; 0xe8 <botonPresionado>
+ 6b8:	88 23       	and	r24, r24
+ 6ba:	79 f3       	breq	.-34     	; 0x69a <main+0x8>
+                estado = CUENTA_REGRESIVA;
+ 6bc:	81 e0       	ldi	r24, 0x01	; 1
+ 6be:	80 93 dc 01 	sts	0x01DC, r24	; 0x8001dc <estado>
+ 6c2:	eb cf       	rjmp	.-42     	; 0x69a <main+0x8>
+            }
+            break;
+
+        case CUENTA_REGRESIVA:
+            cuentaRegresiva();
+ 6c4:	0e 94 86 02 	call	0x50c	; 0x50c <cuentaRegresiva>
+            countP1 = 0;
+ 6c8:	10 92 e0 01 	sts	0x01E0, r1	; 0x8001e0 <countP1+0x1>
+ 6cc:	10 92 df 01 	sts	0x01DF, r1	; 0x8001df <countP1>
+            countP2 = 0;
+ 6d0:	10 92 de 01 	sts	0x01DE, r1	; 0x8001de <countP2+0x1>
+ 6d4:	10 92 dd 01 	sts	0x01DD, r1	; 0x8001dd <countP2>
+            apagarLEDs();
+ 6d8:	0e 94 d7 01 	call	0x3ae	; 0x3ae <apagarLEDs>
+            estado = CARRERA;
+ 6dc:	82 e0       	ldi	r24, 0x02	; 2
+ 6de:	80 93 dc 01 	sts	0x01DC, r24	; 0x8001dc <estado>
+            break;
+ 6e2:	db cf       	rjmp	.-74     	; 0x69a <main+0x8>
+
+        case CARRERA: {
+            uint8_t p1 = botonPresionado(1);
+ 6e4:	81 e0       	ldi	r24, 0x01	; 1
+ 6e6:	90 e0       	ldi	r25, 0x00	; 0
+ 6e8:	0e 94 74 00 	call	0xe8	; 0xe8 <botonPresionado>
+ 6ec:	c8 2f       	mov	r28, r24
+            uint8_t p2 = botonPresionado(2);
+ 6ee:	82 e0       	ldi	r24, 0x02	; 2
+ 6f0:	90 e0       	ldi	r25, 0x00	; 0
+ 6f2:	0e 94 74 00 	call	0xe8	; 0xe8 <botonPresionado>
+
+            if (p1 && countP1 < 15) countP1++;
+ 6f6:	cc 23       	and	r28, r28
+ 6f8:	69 f0       	breq	.+26     	; 0x714 <main+0x82>
+ 6fa:	20 91 df 01 	lds	r18, 0x01DF	; 0x8001df <countP1>
+ 6fe:	30 91 e0 01 	lds	r19, 0x01E0	; 0x8001e0 <countP1+0x1>
+ 702:	2f 30       	cpi	r18, 0x0F	; 15
+ 704:	31 05       	cpc	r19, r1
+ 706:	34 f4       	brge	.+12     	; 0x714 <main+0x82>
+ 708:	2f 5f       	subi	r18, 0xFF	; 255
+ 70a:	3f 4f       	sbci	r19, 0xFF	; 255
+ 70c:	30 93 e0 01 	sts	0x01E0, r19	; 0x8001e0 <countP1+0x1>
+ 710:	20 93 df 01 	sts	0x01DF, r18	; 0x8001df <countP1>
+            if (p2 && countP2 < 15) countP2++;
+ 714:	88 23       	and	r24, r24
+ 716:	69 f0       	breq	.+26     	; 0x732 <main+0xa0>
+ 718:	20 91 dd 01 	lds	r18, 0x01DD	; 0x8001dd <countP2>
+ 71c:	30 91 de 01 	lds	r19, 0x01DE	; 0x8001de <countP2+0x1>
+ 720:	2f 30       	cpi	r18, 0x0F	; 15
+ 722:	31 05       	cpc	r19, r1
+ 724:	34 f4       	brge	.+12     	; 0x732 <main+0xa0>
+ 726:	2f 5f       	subi	r18, 0xFF	; 255
+ 728:	3f 4f       	sbci	r19, 0xFF	; 255
+ 72a:	30 93 de 01 	sts	0x01DE, r19	; 0x8001de <countP2+0x1>
+ 72e:	20 93 dd 01 	sts	0x01DD, r18	; 0x8001dd <countP2>
+
+            if (p1 || p2) actualizarLEDs();
+ 732:	c1 11       	cpse	r28, r1
+ 734:	01 c0       	rjmp	.+2      	; 0x738 <main+0xa6>
+ 736:	81 11       	cpse	r24, r1
+ 738:	0e 94 52 01 	call	0x2a4	; 0x2a4 <actualizarLEDs>
+
+            if (countP1 >= 15) {
+ 73c:	80 91 df 01 	lds	r24, 0x01DF	; 0x8001df <countP1>
+ 740:	90 91 e0 01 	lds	r25, 0x01E0	; 0x8001e0 <countP1+0x1>
+ 744:	0f 97       	sbiw	r24, 0x0f	; 15
+ 746:	2c f0       	brlt	.+10     	; 0x752 <main+0xc0>
+                mostrarGanador(1);
+ 748:	81 e0       	ldi	r24, 0x01	; 1
+ 74a:	90 e0       	ldi	r25, 0x00	; 0
+ 74c:	0e 94 ad 02 	call	0x55a	; 0x55a <mostrarGanador>
+ 750:	a4 cf       	rjmp	.-184    	; 0x69a <main+0x8>
+            } else if (countP2 >= 15) {
+ 752:	80 91 dd 01 	lds	r24, 0x01DD	; 0x8001dd <countP2>
+ 756:	90 91 de 01 	lds	r25, 0x01DE	; 0x8001de <countP2+0x1>
+ 75a:	0f 97       	sbiw	r24, 0x0f	; 15
+ 75c:	0c f4       	brge	.+2      	; 0x760 <main+0xce>
+ 75e:	9d cf       	rjmp	.-198    	; 0x69a <main+0x8>
+                mostrarGanador(2);
+ 760:	82 e0       	ldi	r24, 0x02	; 2
+ 762:	90 e0       	ldi	r25, 0x00	; 0
+ 764:	0e 94 ad 02 	call	0x55a	; 0x55a <mostrarGanador>
+ 768:	98 cf       	rjmp	.-208    	; 0x69a <main+0x8>
+            }
+            break;
+        }
+
+        case FIN:
+            if (botonPresionado(0)) {
+ 76a:	80 e0       	ldi	r24, 0x00	; 0
+ 76c:	90 e0       	ldi	r25, 0x00	; 0
+ 76e:	0e 94 74 00 	call	0xe8	; 0xe8 <botonPresionado>
+ 772:	88 23       	and	r24, r24
+ 774:	09 f4       	brne	.+2      	; 0x778 <main+0xe6>
+ 776:	91 cf       	rjmp	.-222    	; 0x69a <main+0x8>
+                reiniciarRonda();
+ 778:	0e 94 0d 02 	call	0x41a	; 0x41a <reiniciarRonda>
+ 77c:	8e cf       	rjmp	.-228    	; 0x69a <main+0x8>
+
+0000077e <_exit>:
+ 77e:	f8 94       	cli
+
+00000780 <__stop_program>:
+ 780:	ff cf       	rjmp	.-2      	; 0x780 <__stop_program>
