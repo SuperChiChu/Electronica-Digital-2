@@ -3,31 +3,31 @@ Laboratorio 1.elf:     file format elf32-avr
 
 Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
-  0 .data         0000006a  00800100  000002a4  00000338  2**0
+  0 .data         0000006a  00800100  000002b8  0000034c  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  1 .text         000002a4  00000000  00000000  00000094  2**1
+  1 .text         000002b8  00000000  00000000  00000094  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .bss          00000002  0080016a  0080016a  000003a2  2**0
+  2 .bss          00000002  0080016a  0080016a  000003b6  2**0
                   ALLOC
-  3 .comment      00000030  00000000  00000000  000003a2  2**0
+  3 .comment      00000030  00000000  00000000  000003b6  2**0
                   CONTENTS, READONLY
-  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  000003d4  2**2
+  4 .note.gnu.avr.deviceinfo 00000040  00000000  00000000  000003e8  2**2
                   CONTENTS, READONLY
-  5 .debug_aranges 00000070  00000000  00000000  00000414  2**0
+  5 .debug_aranges 00000070  00000000  00000000  00000428  2**0
                   CONTENTS, READONLY, DEBUGGING
-  6 .debug_info   00000a67  00000000  00000000  00000484  2**0
+  6 .debug_info   00000a70  00000000  00000000  00000498  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_abbrev 00000861  00000000  00000000  00000eeb  2**0
+  7 .debug_abbrev 00000861  00000000  00000000  00000f08  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_line   0000049b  00000000  00000000  0000174c  2**0
+  8 .debug_line   000004b5  00000000  00000000  00001769  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_frame  000000dc  00000000  00000000  00001be8  2**2
+  9 .debug_frame  000000dc  00000000  00000000  00001c20  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    00000450  00000000  00000000  00001cc4  2**0
+ 10 .debug_str    00000450  00000000  00000000  00001cfc  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    00000221  00000000  00000000  00002114  2**0
+ 11 .debug_loc    00000221  00000000  00000000  0000214c  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 00000050  00000000  00000000  00002335  2**0
+ 12 .debug_ranges 00000050  00000000  00000000  0000236d  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -72,7 +72,7 @@ Disassembly of section .text:
   74:	11 e0       	ldi	r17, 0x01	; 1
   76:	a0 e0       	ldi	r26, 0x00	; 0
   78:	b1 e0       	ldi	r27, 0x01	; 1
-  7a:	e4 ea       	ldi	r30, 0xA4	; 164
+  7a:	e8 eb       	ldi	r30, 0xB8	; 184
   7c:	f2 e0       	ldi	r31, 0x02	; 2
   7e:	02 c0       	rjmp	.+4      	; 0x84 <__do_copy_data+0x10>
   80:	05 90       	lpm	r0, Z+
@@ -95,7 +95,7 @@ Disassembly of section .text:
   96:	b2 07       	cpc	r27, r18
   98:	e1 f7       	brne	.-8      	; 0x92 <.do_clear_bss_loop>
   9a:	0e 94 09 01 	call	0x212	; 0x212 <main>
-  9e:	0c 94 50 01 	jmp	0x2a0	; 0x2a0 <_exit>
+  9e:	0c 94 5a 01 	jmp	0x2b4	; 0x2b4 <_exit>
 
 000000a2 <__bad_interrupt>:
   a2:	0c 94 00 00 	jmp	0	; 0x0 <__vectors>
@@ -312,49 +312,49 @@ void display_mostrar_digito(int d) {
  1c0:	08 95       	ret
 
 000001c2 <timer0_init>:
-
-
+#include <avr/interrupt.h>
+#include <avr/wdt.h>
+#include "display.h"
 static ticks_ms = 0;
-
 static void timer0_init(void) {
-    TCCR0A = (1 << WGM01);              /* Modo CTC */
+	TCCR0A = (1 << WGM01);              /* Modo CTC */
  1c2:	82 e0       	ldi	r24, 0x02	; 2
  1c4:	84 bd       	out	0x24, r24	; 36
-    TCCR0B = (1 << CS01) | (1 << CS00); /* Prescaler 64 */
+	TCCR0B = (1 << CS01) | (1 << CS00); /* Prescaler 64 */
  1c6:	93 e0       	ldi	r25, 0x03	; 3
  1c8:	95 bd       	out	0x25, r25	; 37
-    OCR0A  = 249;                       /* 16MHz/64/250 = 1000 Hz -> 1 ms */
+	OCR0A  = 249;                       /* 16MHz/64/250 = 1000 Hz -> 1 ms */
  1ca:	99 ef       	ldi	r25, 0xF9	; 249
  1cc:	97 bd       	out	0x27, r25	; 39
-    TIMSK0 = (1 << OCIE0A);
+	TIMSK0 = (1 << OCIE0A);
  1ce:	80 93 6e 00 	sts	0x006E, r24	; 0x80006e <__TEXT_REGION_LENGTH__+0x7f806e>
-    sei();
+	sei();
  1d2:	78 94       	sei
  1d4:	08 95       	ret
 
 000001d6 <millis>:
-    ticks_ms++;
+ISR(TIMER0_COMPA_vect) {
+	ticks_ms++;
 }
-
 static millis(void) {
-    unsigned long m;
-    cli();
+	unsigned long m;
+	cli();
  1d6:	f8 94       	cli
-    m = ticks_ms;
+	m = ticks_ms;
  1d8:	80 91 6a 01 	lds	r24, 0x016A	; 0x80016a <__data_end>
  1dc:	90 91 6b 01 	lds	r25, 0x016B	; 0x80016b <__data_end+0x1>
-    sei();
+	sei();
  1e0:	78 94       	sei
-    return m;
+	return m;
 }
  1e2:	08 95       	ret
 
 000001e4 <__vector_14>:
-    OCR0A  = 249;                       /* 16MHz/64/250 = 1000 Hz -> 1 ms */
-    TIMSK0 = (1 << OCIE0A);
-    sei();
+	TCCR0B = (1 << CS01) | (1 << CS00); /* Prescaler 64 */
+	OCR0A  = 249;                       /* 16MHz/64/250 = 1000 Hz -> 1 ms */
+	TIMSK0 = (1 << OCIE0A);
+	sei();
 }
-
 ISR(TIMER0_COMPA_vect) {
  1e4:	1f 92       	push	r1
  1e6:	0f 92       	push	r0
@@ -363,7 +363,7 @@ ISR(TIMER0_COMPA_vect) {
  1ec:	11 24       	eor	r1, r1
  1ee:	8f 93       	push	r24
  1f0:	9f 93       	push	r25
-    ticks_ms++;
+	ticks_ms++;
  1f2:	80 91 6a 01 	lds	r24, 0x016A	; 0x80016a <__data_end>
  1f6:	90 91 6b 01 	lds	r25, 0x016B	; 0x80016b <__data_end+0x1>
  1fa:	01 96       	adiw	r24, 0x01	; 1
@@ -393,108 +393,125 @@ ISR(TIMER0_COMPA_vect) {
  21e:	80 93 60 00 	sts	0x0060, r24	; 0x800060 <__TEXT_REGION_LENGTH__+0x7f8060>
  222:	10 92 60 00 	sts	0x0060, r1	; 0x800060 <__TEXT_REGION_LENGTH__+0x7f8060>
  226:	0f be       	out	0x3f, r0	; 63
-    unsigned long ultimoCambio;
-
-
-    wdt_disable();
-
-    timer0_init();
+int main(void) {
+	int n = 5;
+	EstadoContador estado = MOSTRANDO;
+	unsigned long ultimoCambio;
+	wdt_disable();
+	timer0_init();
  228:	0e 94 e1 00 	call	0x1c2	; 0x1c2 <timer0_init>
-    display_init();
+	display_init();
  22c:	0e 94 8c 00 	call	0x118	; 0x118 <display_init>
 
-    display_mostrar_digito(n);
- 230:	85 e0       	ldi	r24, 0x05	; 5
- 232:	90 e0       	ldi	r25, 0x00	; 0
- 234:	0e 94 ad 00 	call	0x15a	; 0x15a <display_mostrar_digito>
-    ultimoCambio = millis();
- 238:	0e 94 eb 00 	call	0x1d6	; 0x1d6 <millis>
- 23c:	6c 01       	movw	r12, r24
- 23e:	99 0f       	add	r25, r25
- 240:	ee 08       	sbc	r14, r14
- 242:	ff 08       	sbc	r15, r15
+	/* A0 como entrada con pull-up: el boton conecta a GND */
+	DDRC  &= ~(1 << 0);
+ 230:	87 b1       	in	r24, 0x07	; 7
+ 232:	8e 7f       	andi	r24, 0xFE	; 254
+ 234:	87 b9       	out	0x07, r24	; 7
+	PORTC |= (1 << 0);
+ 236:	88 b1       	in	r24, 0x08	; 8
+ 238:	81 60       	ori	r24, 0x01	; 1
+ 23a:	88 b9       	out	0x08, r24	; 8
 
-typedef enum { MOSTRANDO, PAUSA } EstadoContador;
+	display_apagar();
+ 23c:	0e 94 74 00 	call	0xe8	; 0xe8 <display_apagar>
+	while (PINC & (1 << 0)) {
+ 240:	30 99       	sbic	0x06, 0	; 6
+ 242:	fe cf       	rjmp	.-4      	; 0x240 <main+0x2e>
+		/* espera aqui hasta que se presione el boton de A0 */
+	}
 
-int main(void) {
-    int n = 5;
-    EstadoContador estado = MOSTRANDO;
- 244:	10 e0       	ldi	r17, 0x00	; 0
+	display_mostrar_digito(n);
+ 244:	85 e0       	ldi	r24, 0x05	; 5
+ 246:	90 e0       	ldi	r25, 0x00	; 0
+ 248:	0e 94 ad 00 	call	0x15a	; 0x15a <display_mostrar_digito>
+	ultimoCambio = millis();
+ 24c:	0e 94 eb 00 	call	0x1d6	; 0x1d6 <millis>
+ 250:	6c 01       	movw	r12, r24
+ 252:	99 0f       	add	r25, r25
+ 254:	ee 08       	sbc	r14, r14
+ 256:	ff 08       	sbc	r15, r15
+	return m;
 }
-
 typedef enum { MOSTRANDO, PAUSA } EstadoContador;
-
 int main(void) {
-    int n = 5;
- 246:	c5 e0       	ldi	r28, 0x05	; 5
- 248:	d0 e0       	ldi	r29, 0x00	; 0
+	int n = 5;
+	EstadoContador estado = MOSTRANDO;
+ 258:	10 e0       	ldi	r17, 0x00	; 0
+	sei();
+	return m;
+}
+typedef enum { MOSTRANDO, PAUSA } EstadoContador;
+int main(void) {
+	int n = 5;
+ 25a:	c5 e0       	ldi	r28, 0x05	; 5
+ 25c:	d0 e0       	ldi	r29, 0x00	; 0
+	}
 
-    display_mostrar_digito(n);
-    ultimoCambio = millis();
+	display_mostrar_digito(n);
+	ultimoCambio = millis();
+	for (;;) {
+		if ((millis() - ultimoCambio) >= 1000) {
+ 25e:	0e 94 eb 00 	call	0x1d6	; 0x1d6 <millis>
+ 262:	09 2e       	mov	r0, r25
+ 264:	00 0c       	add	r0, r0
+ 266:	aa 0b       	sbc	r26, r26
+ 268:	bb 0b       	sbc	r27, r27
+ 26a:	8c 19       	sub	r24, r12
+ 26c:	9d 09       	sbc	r25, r13
+ 26e:	ae 09       	sbc	r26, r14
+ 270:	bf 09       	sbc	r27, r15
+ 272:	88 3e       	cpi	r24, 0xE8	; 232
+ 274:	93 40       	sbci	r25, 0x03	; 3
+ 276:	a1 05       	cpc	r26, r1
+ 278:	b1 05       	cpc	r27, r1
+ 27a:	88 f3       	brcs	.-30     	; 0x25e <main+0x4c>
+			ultimoCambio = millis();
+ 27c:	0e 94 eb 00 	call	0x1d6	; 0x1d6 <millis>
+ 280:	6c 01       	movw	r12, r24
+ 282:	99 0f       	add	r25, r25
+ 284:	ee 08       	sbc	r14, r14
+ 286:	ff 08       	sbc	r15, r15
+			if (estado == MOSTRANDO) {
+ 288:	11 11       	cpse	r17, r1
+ 28a:	0c c0       	rjmp	.+24     	; 0x2a4 <main+0x92>
+				if (n > 0) {
+ 28c:	1c 16       	cp	r1, r28
+ 28e:	1d 06       	cpc	r1, r29
+ 290:	2c f4       	brge	.+10     	; 0x29c <main+0x8a>
+					n--;
+ 292:	21 97       	sbiw	r28, 0x01	; 1
+					display_mostrar_digito(n);
+ 294:	ce 01       	movw	r24, r28
+ 296:	0e 94 ad 00 	call	0x15a	; 0x15a <display_mostrar_digito>
+ 29a:	e1 cf       	rjmp	.-62     	; 0x25e <main+0x4c>
+					} else {
+					display_apagar();
+ 29c:	0e 94 74 00 	call	0xe8	; 0xe8 <display_apagar>
+					estado = PAUSA;
+ 2a0:	11 e0       	ldi	r17, 0x01	; 1
+ 2a2:	dd cf       	rjmp	.-70     	; 0x25e <main+0x4c>
+				}
+				} else { /* PAUSA */
+				n = 5;
+				display_mostrar_digito(n);
+ 2a4:	85 e0       	ldi	r24, 0x05	; 5
+ 2a6:	90 e0       	ldi	r25, 0x00	; 0
+ 2a8:	0e 94 ad 00 	call	0x15a	; 0x15a <display_mostrar_digito>
+				estado = MOSTRANDO;
+ 2ac:	10 e0       	ldi	r17, 0x00	; 0
+					} else {
+					display_apagar();
+					estado = PAUSA;
+				}
+				} else { /* PAUSA */
+				n = 5;
+ 2ae:	c5 e0       	ldi	r28, 0x05	; 5
+ 2b0:	d0 e0       	ldi	r29, 0x00	; 0
+ 2b2:	d5 cf       	rjmp	.-86     	; 0x25e <main+0x4c>
 
-    for (;;) {
-        if ((millis() - ultimoCambio) >= 1000) {
- 24a:	0e 94 eb 00 	call	0x1d6	; 0x1d6 <millis>
- 24e:	09 2e       	mov	r0, r25
- 250:	00 0c       	add	r0, r0
- 252:	aa 0b       	sbc	r26, r26
- 254:	bb 0b       	sbc	r27, r27
- 256:	8c 19       	sub	r24, r12
- 258:	9d 09       	sbc	r25, r13
- 25a:	ae 09       	sbc	r26, r14
- 25c:	bf 09       	sbc	r27, r15
- 25e:	88 3e       	cpi	r24, 0xE8	; 232
- 260:	93 40       	sbci	r25, 0x03	; 3
- 262:	a1 05       	cpc	r26, r1
- 264:	b1 05       	cpc	r27, r1
- 266:	88 f3       	brcs	.-30     	; 0x24a <main+0x38>
-            ultimoCambio = millis();
- 268:	0e 94 eb 00 	call	0x1d6	; 0x1d6 <millis>
- 26c:	6c 01       	movw	r12, r24
- 26e:	99 0f       	add	r25, r25
- 270:	ee 08       	sbc	r14, r14
- 272:	ff 08       	sbc	r15, r15
+000002b4 <_exit>:
+ 2b4:	f8 94       	cli
 
-            if (estado == MOSTRANDO) {
- 274:	11 11       	cpse	r17, r1
- 276:	0c c0       	rjmp	.+24     	; 0x290 <main+0x7e>
-                if (n > 0) {
- 278:	1c 16       	cp	r1, r28
- 27a:	1d 06       	cpc	r1, r29
- 27c:	2c f4       	brge	.+10     	; 0x288 <main+0x76>
-                    n--;
- 27e:	21 97       	sbiw	r28, 0x01	; 1
-                    display_mostrar_digito(n);
- 280:	ce 01       	movw	r24, r28
- 282:	0e 94 ad 00 	call	0x15a	; 0x15a <display_mostrar_digito>
- 286:	e1 cf       	rjmp	.-62     	; 0x24a <main+0x38>
-                } else {
-                    display_apagar();
- 288:	0e 94 74 00 	call	0xe8	; 0xe8 <display_apagar>
-                    estado = PAUSA;
- 28c:	11 e0       	ldi	r17, 0x01	; 1
- 28e:	dd cf       	rjmp	.-70     	; 0x24a <main+0x38>
-                }
-            } else { /* PAUSA */
-                n = 5;
-                display_mostrar_digito(n);
- 290:	85 e0       	ldi	r24, 0x05	; 5
- 292:	90 e0       	ldi	r25, 0x00	; 0
- 294:	0e 94 ad 00 	call	0x15a	; 0x15a <display_mostrar_digito>
-                estado = MOSTRANDO;
- 298:	10 e0       	ldi	r17, 0x00	; 0
-                } else {
-                    display_apagar();
-                    estado = PAUSA;
-                }
-            } else { /* PAUSA */
-                n = 5;
- 29a:	c5 e0       	ldi	r28, 0x05	; 5
- 29c:	d0 e0       	ldi	r29, 0x00	; 0
- 29e:	d5 cf       	rjmp	.-86     	; 0x24a <main+0x38>
-
-000002a0 <_exit>:
- 2a0:	f8 94       	cli
-
-000002a2 <__stop_program>:
- 2a2:	ff cf       	rjmp	.-2      	; 0x2a2 <__stop_program>
+000002b6 <__stop_program>:
+ 2b6:	ff cf       	rjmp	.-2      	; 0x2b6 <__stop_program>
