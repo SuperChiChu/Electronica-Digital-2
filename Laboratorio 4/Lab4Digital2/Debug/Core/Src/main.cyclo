@@ -1,0 +1,13 @@
+../Core/Src/main.c:107:6:Mostrar_J1	1
+../Core/Src/main.c:123:6:Mostrar_J2	1
+../Core/Src/main.c:145:6:Actualizar_J1	7
+../Core/Src/main.c:182:6:Actualizar_J2	7
+../Core/Src/main.c:223:6:Display_Apagado	1
+../Core/Src/main.c:236:6:Display_Numero	7
+../Core/Src/main.c:292:6:Ganador_J1	1
+../Core/Src/main.c:318:6:Ganador_J2	1
+../Core/Src/main.c:347:5:main	4
+../Core/Src/main.c:462:6:SystemClock_Config	3
+../Core/Src/main.c:506:13:MX_GPIO_Init	1
+../Core/Src/main.c:591:6:HAL_GPIO_EXTI_Callback	9
+../Core/Src/main.c:684:6:Error_Handler	1
