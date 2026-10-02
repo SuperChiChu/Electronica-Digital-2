@@ -1,0 +1,15 @@
+../Core/Src/ili9341.c:15:13:LCD_SPI_Write	16	static
+../Core/Src/ili9341.c:26:13:LCD_Command16	16	static
+../Core/Src/ili9341.c:38:13:LCD_Command8	16	static
+../Core/Src/ili9341.c:46:13:LCD_PushCommand	16	static
+../Core/Src/ili9341.c:73:13:LCD_Reset	8	static
+../Core/Src/ili9341.c:98:6:ILI9341_Init	128	static
+../Core/Src/ili9341.c:412:13:ILI9341_SetAddressWindow	32	static
+../Core/Src/ili9341.c:446:6:ILI9341_BeginFrame	8	static
+../Core/Src/ili9341.c:463:6:ILI9341_WriteLine	16	static
+../Core/Src/ili9341.c:475:6:ILI9341_EndFrame	8	static
+../Core/Src/ili9341.c:481:6:ILI9341_FillRect	168	static
+../Core/Src/ili9341.c:578:6:ILI9341_FillScreen	24	static
+../Core/Src/ili9341.c:590:6:ILI9341_DrawPixel	24	static
+../Core/Src/ili9341.c:603:6:ILI9341_WriteLineDMA	16	static
+../Core/Src/ili9341.c:613:6:ILI9341_WaitDMA	8	static

@@ -1,0 +1,59 @@
+#ifndef INC_TRACK_TILES_H_
+#define INC_TRACK_TILES_H_
+
+#include <stdint.h>
+
+#define TRACK_TILE_SIZE 32
+#define TRACK_TILE_PIXELS (TRACK_TILE_SIZE * TRACK_TILE_SIZE)
+
+typedef enum
+{
+    TRACK_TILE_GRASS = 0,
+    TRACK_TILE_ROAD_00,
+    TRACK_TILE_ROAD_01,
+    TRACK_TILE_ROAD_02,
+    TRACK_TILE_ROAD_03,
+    TRACK_TILE_ROAD_04,
+    TRACK_TILE_ROAD_05,
+    TRACK_TILE_ROAD_06,
+    TRACK_TILE_ROAD_07,
+    TRACK_TILE_ROAD_08,
+    TRACK_TILE_ROAD_09,
+    TRACK_TILE_ROAD_0A,
+    TRACK_TILE_ROAD_0B,
+    TRACK_TILE_ROAD_0C,
+    TRACK_TILE_ROAD_0D,
+    TRACK_TILE_ROAD_0E,
+    TRACK_TILE_ROAD_0F,
+    TRACK_TILE_FINISH_00,
+    TRACK_TILE_FINISH_01,
+    TRACK_TILE_FINISH_02,
+    TRACK_TILE_FINISH_03,
+    TRACK_TILE_FINISH_04,
+    TRACK_TILE_FINISH_05,
+    TRACK_TILE_FINISH_06,
+    TRACK_TILE_FINISH_07,
+    TRACK_TILE_FINISH_08,
+    TRACK_TILE_FINISH_09,
+    TRACK_TILE_FINISH_0A,
+    TRACK_TILE_FINISH_0B,
+    TRACK_TILE_FINISH_0C,
+    TRACK_TILE_FINISH_0D,
+    TRACK_TILE_FINISH_0E,
+    TRACK_TILE_FINISH_0F,
+    TRACK_TILE_COUNT
+} TrackTileId;
+
+extern const uint16_t track_tiles[TRACK_TILE_COUNT][TRACK_TILE_PIXELS];
+
+static inline uint16_t TrackTiles_GetPixel(uint8_t tile_id, uint8_t x, uint8_t y)
+{
+    if (tile_id >= TRACK_TILE_COUNT || x >= TRACK_TILE_SIZE || y >= TRACK_TILE_SIZE)
+    {
+        return 0x0000;
+    }
+
+    return track_tiles[tile_id][(uint16_t)y * TRACK_TILE_SIZE + x];
+}
+
+#endif
