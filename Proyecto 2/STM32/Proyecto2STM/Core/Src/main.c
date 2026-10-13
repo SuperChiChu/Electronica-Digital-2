@@ -8,6 +8,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "fatfs.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -31,7 +32,9 @@ typedef enum
     STATE_MAP_SELECT,
     STATE_CAR_SELECT_P1,
     STATE_CAR_SELECT_P2,
-    STATE_GAME
+    STATE_GAME,
+	STATE_RACE_END,
+	STATE_RECORDS
 } GameState;
 
 /* USER CODE END PTD */
@@ -41,6 +44,11 @@ typedef enum
 #define MAX_SPEED 340.0f
 #define GRASS_MAX_SPEED 80.0f
 #define GRASS_DRAG 600.0f
+#define NO_RECORD_TIME 0xFFFFFFFFUL
+#define CTRL_LEFT   0x01
+#define CTRL_RIGHT  0x02
+#define CTRL_ACCEL  0x04
+#define CTRL_BRAKE  0x08
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -51,6 +59,12 @@ typedef enum
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi1;
 DMA_HandleTypeDef hdma_spi1_tx;
+
+TIM_HandleTypeDef htim3;
+
+UART_HandleTypeDef huart5;
+UART_HandleTypeDef huart2;
+UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 
@@ -79,6 +93,13 @@ GPIO_PinState last_k3;
 uint32_t last_tick = 0;
 uint32_t last_frame_tick = 0;
 
+uint8_t countdown_active = 0;
+uint32_t countdown_start_tick = 0;
+
+uint32_t race_start_tick = 0;
+uint32_t race_time_ms = 0;
+uint8_t race_timer_started = 0;
+
 uint8_t line_buffer[2][ILI9341_WIDTH * 2];
 
 uint8_t *draw_buffer;
@@ -94,6 +115,27 @@ uint8_t car_selection = 0;
 uint8_t selected_car_p1 = 0;
 uint8_t selected_car_p2 = 1;
 
+uint8_t lap_armed_p1 = 0;
+uint8_t lap_armed_p2 = 0;
+
+uint8_t winner_player = 0;
+uint32_t race_end_tick = 0;
+
+uint8_t sd_available = 0;
+
+uint32_t best_time[2] =
+{
+    NO_RECORD_TIME,   // Villa Nueva
+    NO_RECORD_TIME    // CAES
+};
+
+volatile uint8_t p1_controls = 0;
+uint8_t p1_rx_byte = 0;
+uint32_t p1_last_rx_tick = 0;
+
+volatile uint8_t p2_controls = 0;
+uint8_t p2_rx_byte = 0;
+uint32_t p2_last_rx_tick = 0;
 
 GPIO_PinState idle_brake;
 
@@ -104,8 +146,12 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_TIM3_Init(void);
+static void MX_USART2_UART_Init(void);
+static void MX_USART3_UART_Init(void);
+static void MX_UART5_Init(void);
 /* USER CODE BEGIN PFP */
-
+static void CheckAndSaveRecord(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -118,6 +164,14 @@ static void ResetRacePosition(void)
 
     active_player = 1;
 
+    lap_armed_p1 = 0;
+    lap_armed_p2 = 0;
+
+    winner_player = 0;
+
+    race_start_tick = 0;
+    race_time_ms = 0;
+    race_timer_started = 0;
 
     if (selected_map == 0)
     {
@@ -210,6 +264,9 @@ static void ResetRacePosition(void)
         car1_angle = 90.0f;
         car2_angle = 90.0f;
     }
+
+    countdown_active = 1;
+    countdown_start_tick = HAL_GetTick();
 }
 
 static void UpdateCar(
@@ -227,7 +284,7 @@ static void UpdateCar(
         180.0f;
 
     const float ACCELERATION =
-        120.0f;
+        100.0f;
 
     const float BRAKE_FORCE =
         450.0f;
@@ -340,8 +397,9 @@ static int FloorDiv32(int value)
     );
 }
 
-static uint8_t IsCarOnGrass(float x,
-                            float y)
+static uint8_t GetTrackTileAtPosition(
+    float x,
+    float y)
 {
     int tile_x =
         FloorDiv32((int)x);
@@ -357,12 +415,11 @@ static uint8_t IsCarOnGrass(float x,
             tile_x >= VILLA_NUEVA_MAP_WIDTH ||
             tile_y >= VILLA_NUEVA_MAP_HEIGHT)
         {
-            return 1;
+            return TRACK_TILE_GRASS;
         }
 
         return
-            villa_nueva_map[tile_y][tile_x]
-            == TRACK_TILE_GRASS;
+            villa_nueva_map[tile_y][tile_x];
     }
 
 
@@ -373,12 +430,110 @@ static uint8_t IsCarOnGrass(float x,
             tile_x >= CAES_MAP_WIDTH ||
             tile_y >= CAES_MAP_HEIGHT)
         {
-            return 1;
+            return TRACK_TILE_GRASS;
         }
 
         return
-            caes_map[tile_y][tile_x]
-            == TRACK_TILE_GRASS;
+            caes_map[tile_y][tile_x];
+    }
+
+
+    return TRACK_TILE_GRASS;
+}
+
+
+static uint8_t IsCarOnGrass(
+    float x,
+    float y)
+{
+    return
+        GetTrackTileAtPosition(x, y)
+        == TRACK_TILE_GRASS;
+}
+
+static uint8_t IsOnFinish(
+    float x,
+    float y)
+{
+    uint8_t tile =
+        GetTrackTileAtPosition(x, y);
+
+    return
+        tile >= TRACK_TILE_FINISH_00 &&
+        tile <= TRACK_TILE_FINISH_0F;
+}
+
+static uint8_t IsInLapCheckpoint(
+    float x,
+    float y)
+{
+    int tile_x =
+        FloorDiv32((int)x);
+
+    int tile_y =
+        FloorDiv32((int)y);
+
+
+    /*
+     * Tiene que estar sobre pista.
+     */
+    if (GetTrackTileAtPosition(x, y)
+        == TRACK_TILE_GRASS)
+    {
+        return 0;
+    }
+
+
+    /*
+     * VILLA NUEVA:
+     * zona izquierda del circuito.
+     */
+    if (selected_map == 0)
+    {
+        return
+            tile_x >= 8 &&
+            tile_x <= 16 &&
+            tile_y >= 20 &&
+            tile_y <= 40;
+    }
+
+
+    /*
+     * CAES:
+     * parte superior del circuito.
+     */
+    if (selected_map == 1)
+    {
+        return
+            tile_x >= 52 &&
+            tile_x <= 60 &&
+            tile_y >= 8 &&
+            tile_y <= 18;
+    }
+
+
+    return 0;
+}
+
+static uint8_t CheckLapCompleted(
+    float x,
+    float y,
+    uint8_t *lap_armed)
+{
+    if (!(*lap_armed))
+    {
+        if (IsInLapCheckpoint(x, y))
+        {
+            *lap_armed = 1;
+        }
+
+        return 0;
+    }
+
+
+    if (IsOnFinish(x, y))
+    {
+        return 1;
     }
 
 
@@ -781,6 +936,23 @@ static void GetGlyph(char c, uint8_t glyph[5])
             break;
         }
 
+        case 'M':
+        {
+            uint8_t g[5] =
+            {
+                0x7F,
+                0x02,
+                0x0C,
+                0x02,
+                0x7F
+            };
+
+            for (int i = 0; i < 5; i++)
+                glyph[i] = g[i];
+
+            break;
+        }
+
         case 'W':
         {
             uint8_t g[5] = {0x3F,0x40,0x38,0x40,0x3F};
@@ -791,6 +963,13 @@ static void GetGlyph(char c, uint8_t glyph[5])
         case 'Y':
         {
             uint8_t g[5] = {0x03,0x04,0x78,0x04,0x03};
+            for (int i = 0; i < 5; i++) glyph[i] = g[i];
+            break;
+        }
+
+        case '0':
+        {
+            uint8_t g[5] = {0x3E,0x51,0x49,0x45,0x3E};
             for (int i = 0; i < 5; i++) glyph[i] = g[i];
             break;
         }
@@ -816,6 +995,62 @@ static void GetGlyph(char c, uint8_t glyph[5])
             break;
         }
 
+        case '4':
+        {
+            uint8_t g[5] = {0x18,0x14,0x12,0x7F,0x10};
+            for (int i = 0; i < 5; i++) glyph[i] = g[i];
+            break;
+        }
+
+        case '5':
+        {
+            uint8_t g[5] = {0x27,0x45,0x45,0x45,0x39};
+            for (int i = 0; i < 5; i++) glyph[i] = g[i];
+            break;
+        }
+
+        case '6':
+        {
+            uint8_t g[5] = {0x3C,0x4A,0x49,0x49,0x30};
+            for (int i = 0; i < 5; i++) glyph[i] = g[i];
+            break;
+        }
+
+        case '7':
+        {
+            uint8_t g[5] = {0x01,0x71,0x09,0x05,0x03};
+            for (int i = 0; i < 5; i++) glyph[i] = g[i];
+            break;
+        }
+
+        case '8':
+        {
+            uint8_t g[5] = {0x36,0x49,0x49,0x49,0x36};
+            for (int i = 0; i < 5; i++) glyph[i] = g[i];
+            break;
+        }
+
+        case '9':
+        {
+            uint8_t g[5] = {0x06,0x49,0x49,0x29,0x1E};
+            for (int i = 0; i < 5; i++) glyph[i] = g[i];
+            break;
+        }
+
+        case ':':
+        {
+            uint8_t g[5] = {0x00,0x36,0x36,0x00,0x00};
+            for (int i = 0; i < 5; i++) glyph[i] = g[i];
+            break;
+        }
+
+        case '.':
+        {
+            uint8_t g[5] = {0x00,0x60,0x60,0x00,0x00};
+            for (int i = 0; i < 5; i++) glyph[i] = g[i];
+            break;
+        }
+
         case '>':
         {
             uint8_t g[5] = {0x00,0x22,0x14,0x08,0x00};
@@ -829,6 +1064,232 @@ static void GetGlyph(char c, uint8_t glyph[5])
     }
 }
 
+static void DrawCountdownLine(int screen_y)
+{
+    if (!countdown_active)
+    {
+        return;
+    }
+
+
+    uint32_t elapsed =
+        HAL_GetTick() -
+        countdown_start_tick;
+
+
+    char text[3] =
+    {
+        '\0',
+        '\0',
+        '\0'
+    };
+
+    int chars = 1;
+
+    uint16_t color =
+        ILI9341_YELLOW;
+
+
+    if (elapsed < 1000)
+    {
+        text[0] = '3';
+    }
+    else if (elapsed < 2000)
+    {
+        text[0] = '2';
+    }
+    else if (elapsed < 3000)
+    {
+        text[0] = '1';
+    }
+    else if (elapsed < 3500)
+    {
+        text[0] = 'G';
+        text[1] = 'O';
+
+        chars = 2;
+
+        color =
+            ILI9341_GREEN;
+    }
+    else
+    {
+        return;
+    }
+
+
+    const int scale = 8;
+
+    const int glyph_height =
+        7 * scale;
+
+    const int start_y =
+        (ILI9341_HEIGHT -
+         glyph_height) / 2;
+
+
+    if (screen_y < start_y ||
+        screen_y >=
+        start_y +
+        glyph_height)
+    {
+        return;
+    }
+
+
+    int row =
+        (screen_y -
+         start_y) /
+        scale;
+
+
+    int text_width =
+        (chars * 6 - 1) *
+        scale;
+
+    int start_x =
+        (ILI9341_WIDTH -
+         text_width) / 2;
+
+
+    for (int ch = 0;
+         ch < chars;
+         ch++)
+    {
+        uint8_t glyph[5];
+
+        GetGlyph(
+            text[ch],
+            glyph
+        );
+
+
+        int char_x =
+            start_x +
+            ch * 6 * scale;
+
+
+        for (int col = 0;
+             col < 5;
+             col++)
+        {
+            if (glyph[col] &
+                (1 << row))
+            {
+                int x0 =
+                    char_x +
+                    col * scale;
+
+
+                for (int dx = 0;
+                     dx < scale;
+                     dx++)
+                {
+                    SetPixelInLine(
+                        x0 + dx,
+                        color
+                    );
+                }
+            }
+        }
+    }
+}
+
+static void FormatLapTime(uint32_t ms, char text[9])
+{
+    uint32_t minutes = ms / 60000;
+    uint32_t seconds = (ms / 1000) % 60;
+    uint32_t hundredths = (ms / 10) % 100;
+
+    if (minutes > 99)
+        minutes = 99;
+
+    text[0] = '0' + (minutes / 10);
+    text[1] = '0' + (minutes % 10);
+    text[2] = ':';
+    text[3] = '0' + (seconds / 10);
+    text[4] = '0' + (seconds % 10);
+    text[5] = '.';
+    text[6] = '0' + (hundredths / 10);
+    text[7] = '0' + (hundredths % 10);
+    text[8] = '\0';
+}
+
+
+static void DrawLapTimerLine(int local_y)
+{
+    if (!race_timer_started)
+        return;
+
+    const int scale = 2;
+    const int box_x = 68;
+    const int box_y = 20;
+    const int box_w = 104;
+    const int box_h = 20;
+
+    if (local_y < box_y ||
+        local_y >= box_y + box_h)
+        return;
+
+    for (int x = box_x;
+         x < box_x + box_w;
+         x++)
+    {
+        SetPixelInLine(x, ILI9341_BLACK);
+    }
+
+    const int text_y = 23;
+
+    if (local_y < text_y ||
+        local_y >= text_y + 7 * scale)
+        return;
+
+    char text[9];
+    FormatLapTime(race_time_ms, text);
+
+    int row =
+        (local_y - text_y) /
+        scale;
+
+    int start_x = 72;
+
+    for (int ch = 0;
+         text[ch] != '\0';
+         ch++)
+    {
+        uint8_t glyph[5];
+
+        GetGlyph(
+            text[ch],
+            glyph
+        );
+
+        int char_x =
+            start_x +
+            ch * 6 * scale;
+
+        for (int col = 0;
+             col < 5;
+             col++)
+        {
+            if (glyph[col] &
+                (1 << row))
+            {
+                for (int dx = 0;
+                     dx < scale;
+                     dx++)
+                {
+                    SetPixelInLine(
+                        char_x +
+                        col * scale +
+                        dx,
+                        ILI9341_WHITE
+                    );
+                }
+            }
+        }
+    }
+}
 
 static void DrawChar5x7(int x,
                         int y,
@@ -979,7 +1440,153 @@ static void DrawMapSelect(void)
         ILI9341_YELLOW,
         1
     );
+
+    DrawText5x7(
+            81,
+            235,
+            "K3 RECORDS",
+            ILI9341_GREEN,
+            1
+    );
 }
+
+static void DrawRecords(void)
+{
+    char time_text[9];
+
+
+    ILI9341_FillScreen(
+        ILI9341_BLACK
+    );
+
+
+    DrawText5x7(
+        78,
+        35,
+        "RECORDS",
+        ILI9341_WHITE,
+        2
+    );
+
+
+    /*
+     * No hay microSD.
+     */
+    if (!sd_available)
+    {
+        DrawText5x7(
+            60,
+            145,
+            "NO MEMORY",
+            ILI9341_RED,
+            2
+        );
+
+
+        DrawText5x7(
+            90,
+            275,
+            "K3 BACK",
+            ILI9341_GREEN,
+            1
+        );
+
+        return;
+    }
+
+
+    /*
+     * Villa Nueva
+     */
+    DrawText5x7(
+        72,
+        95,
+        "VILLA NUEVA",
+        ILI9341_YELLOW,
+        1
+    );
+
+
+    if (best_time[0] ==
+        NO_RECORD_TIME)
+    {
+        DrawText5x7(
+            90,
+            120,
+            "NO RECORD",
+            ILI9341_WHITE,
+            1
+        );
+    }
+    else
+    {
+        FormatLapTime(
+            best_time[0],
+            time_text
+        );
+
+        DrawText5x7(
+            72,
+            115,
+            time_text,
+            ILI9341_WHITE,
+            2
+        );
+    }
+
+
+    /*
+     * CAES
+     */
+    DrawText5x7(
+        108,
+        180,
+        "CAES",
+        ILI9341_YELLOW,
+        1
+    );
+
+
+    if (best_time[1] ==
+        NO_RECORD_TIME)
+    {
+        DrawText5x7(
+            90,
+            205,
+            "NO RECORD",
+            ILI9341_WHITE,
+            1
+        );
+    }
+    else
+    {
+        FormatLapTime(
+            best_time[1],
+            time_text
+        );
+
+        DrawText5x7(
+            72,
+            200,
+            time_text,
+            ILI9341_WHITE,
+            2
+        );
+    }
+
+
+    DrawText5x7(
+        90,
+        275,
+        "K3 BACK",
+        ILI9341_GREEN,
+        1
+    );
+
+
+}
+
+
 
 
 static void DrawCarSelect(uint8_t player)
@@ -1323,6 +1930,7 @@ static void RenderFrame(void)
                 y,
                 car1_speed
             );
+            DrawLapTimerLine(y);
         }
 
 
@@ -1394,6 +2002,7 @@ static void RenderFrame(void)
                     local_y,
                     car1_speed
                 );
+                DrawLapTimerLine(local_y);
 
 
                 /*
@@ -1508,6 +2117,8 @@ static void RenderFrame(void)
                     car2_speed
                 );
 
+                DrawLapTimerLine(local_y);
+
 
                 if (active_player == 2)
                 {
@@ -1534,6 +2145,7 @@ static void RenderFrame(void)
             }
         }
 
+        DrawCountdownLine(y);
 
         /*
          * DMA
@@ -1560,6 +2172,214 @@ static void RenderFrame(void)
     ILI9341_WaitDMA();
 
     ILI9341_EndFrame();
+}
+
+static void FinishRace(uint8_t player)
+{
+    winner_player = player;
+
+    car1_speed = 0.0f;
+    car2_speed = 0.0f;
+
+    if (race_timer_started)
+    {
+        race_time_ms =
+            HAL_GetTick() -
+            race_start_tick;
+    }
+
+    /*
+     * Render final:
+     * dejamos congelada la carrera
+     * exactamente donde terminó.
+     */
+    RenderFrame();
+    race_timer_started = 0;
+
+
+    /*
+     * Caja encima de la imagen congelada.
+     */
+    ILI9341_FillRect(
+        55,
+        125,
+        130,
+        70,
+        ILI9341_BLACK
+    );
+
+
+    if (player == 1)
+    {
+        DrawText5x7(
+            78,
+            148,
+            "P1 WINS",
+            ILI9341_YELLOW,
+            2
+        );
+    }
+    else
+    {
+        DrawText5x7(
+            78,
+            148,
+            "P2 WINS",
+            ILI9341_YELLOW,
+            2
+        );
+    }
+
+    char final_time_text[9];
+
+    FormatLapTime(
+        race_time_ms,
+        final_time_text
+    );
+
+    DrawText5x7(
+        72,
+        174,
+        final_time_text,
+        ILI9341_WHITE,
+        2
+    );
+
+
+    /*
+     * Revisar si este tiempo
+     * es un nuevo récord.
+     */
+    CheckAndSaveRecord();
+
+
+    race_end_tick =
+        HAL_GetTick();
+
+    game_state =
+        STATE_RACE_END;
+}
+
+static void LoadRecordsFromSD(void)
+{
+    FIL file;
+    UINT bytes_read;
+
+    uint32_t loaded[2];
+
+
+    best_time[0] = NO_RECORD_TIME;
+    best_time[1] = NO_RECORD_TIME;
+
+
+    /*
+     * Intentar montar la SD.
+     */
+    if (f_mount(
+            &USERFatFS,
+            USERPath,
+            1) != FR_OK)
+    {
+        sd_available = 0;
+        return;
+    }
+
+
+    sd_available = 1;
+
+
+    /*
+     * Si records.dat todavía no existe,
+     * simplemente no hay récords.
+     */
+    if (f_open(
+            &file,
+            "0:/records.dat",
+            FA_READ) != FR_OK)
+    {
+        return;
+    }
+
+
+    if (f_read(
+            &file,
+            loaded,
+            sizeof(loaded),
+            &bytes_read) == FR_OK &&
+        bytes_read == sizeof(loaded))
+    {
+        best_time[0] = loaded[0];
+        best_time[1] = loaded[1];
+    }
+
+
+    f_close(&file);
+}
+
+
+static void SaveRecordsToSD(void)
+{
+    FIL file;
+    UINT bytes_written;
+
+
+    if (!sd_available)
+    {
+        return;
+    }
+
+
+    if (f_open(
+            &file,
+            "0:/records.dat",
+            FA_CREATE_ALWAYS |
+            FA_WRITE) != FR_OK)
+    {
+        sd_available = 0;
+        return;
+    }
+
+
+    if (f_write(
+            &file,
+            best_time,
+            sizeof(best_time),
+            &bytes_written) != FR_OK ||
+        bytes_written != sizeof(best_time))
+    {
+        sd_available = 0;
+    }
+
+
+    f_close(&file);
+}
+
+
+static void CheckAndSaveRecord(void)
+{
+    if (!sd_available)
+    {
+        return;
+    }
+
+
+    if (selected_map > 1)
+    {
+        return;
+    }
+
+
+    /*
+     * Menor tiempo = mejor tiempo.
+     */
+    if (race_time_ms <
+        best_time[selected_map])
+    {
+        best_time[selected_map] =
+            race_time_ms;
+
+        SaveRecordsToSD();
+    }
 }
 
 /* USER CODE END 0 */
@@ -1595,6 +2415,11 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_SPI1_Init();
+  MX_FATFS_Init();
+  MX_TIM3_Init();
+  MX_USART2_UART_Init();
+  MX_USART3_UART_Init();
+  MX_UART5_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_Delay(200);
@@ -1602,6 +2427,26 @@ int main(void)
   ILI9341_Init();
 
   HAL_Delay(50);
+
+  HAL_TIM_PWM_Start(
+      &htim3,
+      TIM_CHANNEL_1
+  );
+
+
+  LoadRecordsFromSD();
+
+  HAL_UART_Receive_IT(
+      &huart3,
+      &p1_rx_byte,
+      1
+  );
+
+  HAL_UART_Receive_IT(
+      &huart5,
+      &p2_rx_byte,
+      1
+  );
 
   idle_k1 =
       HAL_GPIO_ReadPin(
@@ -1767,6 +2612,27 @@ int main(void)
 
             DrawCarSelect(1);
         }
+
+        else if (k3_new)
+        {
+            game_state =
+                STATE_RECORDS;
+
+            DrawRecords();
+        }
+    }
+
+
+    else if (game_state ==
+             STATE_RECORDS)
+    {
+        if (k3_new)
+        {
+            game_state =
+                STATE_MAP_SELECT;
+
+            DrawMapSelect();
+        }
     }
 
 
@@ -1917,6 +2783,61 @@ int main(void)
             dt = 0.1f;
         }
 
+        uint8_t race_locked = 0;
+
+
+        if (countdown_active)
+        {
+            uint32_t countdown_elapsed =
+                now -
+                countdown_start_tick;
+
+
+            /*
+             * Durante 3, 2, 1
+             * nadie puede moverse.
+             */
+            if (countdown_elapsed <
+                3000)
+            {
+                race_locked = 1;
+            }
+
+
+            /*
+             * GO dura medio segundo
+             * en pantalla.
+             */
+            if (countdown_elapsed >=
+                3500)
+            {
+                countdown_active = 0;
+            }
+        }
+
+        /*
+         * Timer empieza exactamente
+         * cuando termina 3, 2, 1.
+         */
+        if (!race_timer_started &&
+            (now - countdown_start_tick) >= 3000)
+        {
+            race_start_tick =
+                countdown_start_tick + 3000;
+
+            race_timer_started = 1;
+        }
+
+
+        /*
+         * Actualizar tiempo actual.
+         */
+        if (race_timer_started)
+        {
+            race_time_ms =
+                now - race_start_tick;
+        }
+
 
         /*
          * En 2 jugadores:
@@ -1924,7 +2845,8 @@ int main(void)
          * cambia quién controla K1/K2/K3.
          */
 
-        if (player_count == 2 &&
+        if (!race_locked &&
+            player_count == 2 &&
             brake_new)
         {
             if (active_player == 1)
@@ -1965,17 +2887,27 @@ int main(void)
 
         if (player_count == 1)
         {
+            if ((HAL_GetTick() -
+                 p1_last_rx_tick) > 150)
+            {
+                p1_controls = 0;
+            }
+
             p1_left =
-                k1_pressed;
+                (p1_controls &
+                 CTRL_LEFT) != 0;
 
             p1_right =
-                k2_pressed;
+                (p1_controls &
+                 CTRL_RIGHT) != 0;
 
             p1_accel =
-                k3_pressed;
+                (p1_controls &
+                 CTRL_ACCEL) != 0;
 
             p1_brake =
-                brake_pressed;
+                (p1_controls &
+                 CTRL_BRAKE) != 0;
         }
 
 
@@ -1987,36 +2919,63 @@ int main(void)
 
         else
         {
-            if (active_player == 1)
+            if ((HAL_GetTick() -
+                 p1_last_rx_tick) > 150)
             {
-                p1_left =
-                    k1_pressed;
-
-                p1_right =
-                    k2_pressed;
-
-                p1_accel =
-                    k3_pressed;
-
-                p1_brake =
-                    brake_pressed;
+                p1_controls = 0;
             }
-            else
+
+            if ((HAL_GetTick() -
+                 p2_last_rx_tick) > 150)
             {
-                p2_left =
-                    k1_pressed;
-
-                p2_right =
-                    k2_pressed;
-
-                p2_accel =
-                    k3_pressed;
-
-                p2_brake =
-                    brake_pressed;
+                p2_controls = 0;
             }
+
+            p1_left =
+                (p1_controls &
+                 CTRL_LEFT) != 0;
+
+            p1_right =
+                (p1_controls &
+                 CTRL_RIGHT) != 0;
+
+            p1_accel =
+                (p1_controls &
+                 CTRL_ACCEL) != 0;
+
+            p1_brake =
+                (p1_controls &
+                 CTRL_BRAKE) != 0;
+
+            p2_left =
+                (p2_controls &
+                 CTRL_LEFT) != 0;
+
+            p2_right =
+                (p2_controls &
+                 CTRL_RIGHT) != 0;
+
+            p2_accel =
+                (p2_controls &
+                 CTRL_ACCEL) != 0;
+
+            p2_brake =
+                (p2_controls &
+                 CTRL_BRAKE) != 0;
         }
 
+        if (race_locked)
+        {
+            p1_left = 0;
+            p1_right = 0;
+            p1_accel = 0;
+            p1_brake = 0;
+
+            p2_left = 0;
+            p2_right = 0;
+            p2_accel = 0;
+            p2_brake = 0;
+        }
 
         UpdateCar(
             &car1_x,
@@ -2081,18 +3040,55 @@ int main(void)
             }
         }
 
-
-        if ((now -
-             last_frame_tick)
-            >= 33)
+        /*
+         * Detectar ganador.
+         * No revisar mientras siga
+         * bloqueado el countdown.
+         */
+        if (!race_locked)
         {
-            last_frame_tick =
-                now;
+            if (CheckLapCompleted(
+                    car1_x,
+                    car1_y,
+                    &lap_armed_p1))
+            {
+                FinishRace(1);
+            }
+            else if (
+                player_count == 2 &&
+                CheckLapCompleted(
+                    car2_x,
+                    car2_y,
+                    &lap_armed_p2))
+            {
+                FinishRace(2);
+            }
+        }
+
+
+        if (game_state == STATE_GAME &&
+            (now - last_frame_tick) >= 33)
+        {
+            last_frame_tick = now;
 
             RenderFrame();
         }
     }
 
+    else if (game_state ==
+             STATE_RACE_END)
+    {
+        if (HAL_GetTick() -
+            race_end_tick >= 3000)
+        {
+            menu_selection = 0;
+
+            game_state =
+                STATE_MENU;
+
+            DrawMenu();
+        }
+    }
 
     last_k1 = k1;
     last_k2 = k2;
@@ -2189,6 +3185,154 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 83;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 999;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 500;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
+
+}
+
+/**
+  * @brief UART5 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_UART5_Init(void)
+{
+
+  /* USER CODE BEGIN UART5_Init 0 */
+
+  /* USER CODE END UART5_Init 0 */
+
+  /* USER CODE BEGIN UART5_Init 1 */
+
+  /* USER CODE END UART5_Init 1 */
+  huart5.Instance = UART5;
+  huart5.Init.BaudRate = 115200;
+  huart5.Init.WordLength = UART_WORDLENGTH_8B;
+  huart5.Init.StopBits = UART_STOPBITS_1;
+  huart5.Init.Parity = UART_PARITY_NONE;
+  huart5.Init.Mode = UART_MODE_TX_RX;
+  huart5.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart5.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart5) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART5_Init 2 */
+
+  /* USER CODE END UART5_Init 2 */
+
+}
+
+/**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
+  * @brief USART3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART3_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART3_Init 0 */
+
+  /* USER CODE END USART3_Init 0 */
+
+  /* USER CODE BEGIN USART3_Init 1 */
+
+  /* USER CODE END USART3_Init 1 */
+  huart3.Instance = USART3;
+  huart3.Init.BaudRate = 115200;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
+  huart3.Init.StopBits = UART_STOPBITS_1;
+  huart3.Init.Parity = UART_PARITY_NONE;
+  huart3.Init.Mode = UART_MODE_TX_RX;
+  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART3_Init 2 */
+
+  /* USER CODE END USART3_Init 2 */
+
+}
+
+/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -2221,6 +3365,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin, GPIO_PIN_RESET);
@@ -2229,7 +3374,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(LCD_RST_GPIO_Port, LCD_RST_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, SD_CS_Pin|LCD_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -2241,14 +3386,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = K1_Pin|K2_Pin|K3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : USART_TX_Pin USART_RX_Pin */
-  GPIO_InitStruct.Pin = USART_TX_Pin|USART_RX_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LCD_DC_Pin */
@@ -2265,12 +3402,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LCD_RST_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LCD_CS_Pin */
-  GPIO_InitStruct.Pin = LCD_CS_Pin;
+  /*Configure GPIO pins : SD_CS_Pin LCD_CS_Pin */
+  GPIO_InitStruct.Pin = SD_CS_Pin|LCD_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LCD_CS_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -2278,6 +3415,33 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART3)
+    {
+        p1_controls = p1_rx_byte;
+        p1_last_rx_tick = HAL_GetTick();
+
+        HAL_UART_Receive_IT(
+            &huart3,
+            &p1_rx_byte,
+            1
+        );
+    }
+
+    if (huart->Instance == UART5)
+    {
+        p2_controls = p2_rx_byte;
+        p2_last_rx_tick = HAL_GetTick();
+
+        HAL_UART_Receive_IT(
+            &huart5,
+            &p2_rx_byte,
+            1
+        );
+    }
+}
 
 /* USER CODE END 4 */
 

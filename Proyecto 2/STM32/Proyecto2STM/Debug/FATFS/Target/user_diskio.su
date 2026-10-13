@@ -1,0 +1,16 @@
+../FATFS/Target/user_diskio.c:78:16:SD_SPI_TxRx	32	static
+../FATFS/Target/user_diskio.c:94:13:SD_SPI_SetPrescaler	16	static
+../FATFS/Target/user_diskio.c:120:13:SD_SPI_Slow	8	static
+../FATFS/Target/user_diskio.c:150:13:SD_SPI_Fast	8	static
+../FATFS/Target/user_diskio.c:174:13:SD_SPI_RestoreLCD	8	static
+../FATFS/Target/user_diskio.c:198:13:SD_Deselect	8	static
+../FATFS/Target/user_diskio.c:213:16:SD_WaitReady	24	static
+../FATFS/Target/user_diskio.c:236:16:SD_Select	8	static
+../FATFS/Target/user_diskio.c:257:16:SD_SendCommand	40	static
+../FATFS/Target/user_diskio.c:356:16:SD_ReceiveDataBlock	40	static
+../FATFS/Target/user_diskio.c:410:16:SD_SendDataBlock	24	static
+../FATFS/Target/user_diskio.c:499:9:USER_initialize	48	static
+../FATFS/Target/user_diskio.c:709:9:USER_status	16	static
+../FATFS/Target/user_diskio.c:733:9:USER_read	32	static
+../FATFS/Target/user_diskio.c:827:9:USER_write	32	static
+../FATFS/Target/user_diskio.c:919:9:USER_ioctl	48	static
