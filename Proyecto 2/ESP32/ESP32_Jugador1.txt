@@ -1,0 +1,261 @@
+#include <Bluepad32.h>
+
+/*
+ * ==========================================
+ * VILLA NUEVA RACING
+ * PLAYER 1 - JOY-CON IZQUIERDO
+ * ==========================================
+ */
+
+ControllerPtr joycon = nullptr;
+
+
+// UART hacia STM32
+HardwareSerial STM32Serial(2);
+
+#define STM32_RX_PIN 16
+#define STM32_TX_PIN 17
+
+
+/*
+ * Bits enviados al STM32
+ *
+ * bit 0 = izquierda
+ * bit 1 = derecha
+ * bit 2 = acelerar
+ * bit 3 = frenar
+ */
+#define CTRL_LEFT   0x01
+#define CTRL_RIGHT  0x02
+#define CTRL_ACCEL  0x04
+#define CTRL_BRAKE  0x08
+
+
+// Deadzone del joystick
+#define STICK_DEADZONE 120
+
+
+uint8_t lastControl = 0xFF;
+
+uint32_t lastSend = 0;
+
+
+// ==========================================
+// CONTROL CONECTADO
+// ==========================================
+
+void onConnectedController(ControllerPtr ctl)
+{
+    if (joycon == nullptr)
+    {
+        joycon = ctl;
+
+        Serial.println();
+        Serial.println("========================");
+        Serial.println("PLAYER 1 CONECTADO");
+
+        Serial.print("Control: ");
+        Serial.println(
+            ctl->getModelName()
+        );
+
+        Serial.println("========================");
+    }
+}
+
+
+// ==========================================
+// CONTROL DESCONECTADO
+// ==========================================
+
+void onDisconnectedController(ControllerPtr ctl)
+{
+    if (joycon == ctl)
+    {
+        joycon = nullptr;
+
+        Serial.println();
+        Serial.println(
+            "PLAYER 1 DESCONECTADO"
+        );
+    }
+}
+
+
+// ==========================================
+// SETUP
+// ==========================================
+
+void setup()
+{
+    Serial.begin(115200);
+
+    delay(500);
+
+
+    /*
+     * UART hacia STM32
+     */
+    STM32Serial.begin(
+        115200,
+        SERIAL_8N1,
+        STM32_RX_PIN,
+        STM32_TX_PIN
+    );
+
+
+    Serial.println();
+    Serial.println(
+        "Villa Nueva Racing - Player 1"
+    );
+
+    Serial.println(
+        "Esperando Joy-Con izquierdo..."
+    );
+
+
+    /*
+     * Inicializar Bluepad32
+     */
+    BP32.setup(
+        &onConnectedController,
+        &onDisconnectedController
+    );
+
+
+    /*
+     * No necesitamos mouse/keyboard virtual.
+     */
+    BP32.enableVirtualDevice(false);
+}
+
+
+// ==========================================
+// LOOP
+// ==========================================
+
+void loop()
+{
+    /*
+     * Actualizar Bluepad32.
+     */
+    BP32.update();
+
+
+    /*
+     * Enviar cada 20 ms = 50 Hz.
+     */
+    if (millis() - lastSend < 20)
+    {
+        return;
+    }
+
+    lastSend = millis();
+
+
+    uint8_t controls = 0;
+
+
+    /*
+     * ======================================
+     * JOY-CON CONECTADO
+     * ======================================
+     */
+
+    if (joycon != nullptr &&
+        joycon->isConnected() &&
+        joycon->isGamepad())
+    {
+        int32_t x =
+            joycon->axisX();
+
+
+        /*
+         * DIRECCIÓN
+         */
+        if (x < -STICK_DEADZONE)
+        {
+            controls |= CTRL_LEFT;
+        }
+
+        else if (x > STICK_DEADZONE)
+        {
+            controls |= CTRL_RIGHT;
+        }
+
+
+        /*
+         * SR = acelerar
+         */
+        if (joycon->r1())
+        {
+            controls |= CTRL_ACCEL;
+        }
+
+
+        /*
+         * SL = frenar
+         */
+        if (joycon->l1())
+        {
+            controls |= CTRL_BRAKE;
+        }
+
+
+        /*
+         * Debug:
+         * solamente imprimir cuando algo cambia.
+         */
+        if (controls != lastControl)
+        {
+            Serial.print("X = ");
+            Serial.print(x);
+
+            Serial.print(" | Y = ");
+            Serial.print(
+                joycon->axisY()
+            );
+
+            Serial.print(" | SL = ");
+            Serial.print(
+                joycon->l1()
+            );
+
+            Serial.print(" | SR = ");
+            Serial.print(
+                joycon->r1()
+            );
+
+            Serial.print(" | CTRL = 0x");
+
+            if (controls < 0x10)
+            {
+                Serial.print("0");
+            }
+
+            Serial.println(
+                controls,
+                HEX
+            );
+
+
+            lastControl =
+                controls;
+        }
+    }
+
+
+    /*
+     * ======================================
+     * MANDAR AL STM32
+     * ======================================
+     *
+     * Si el Joy-Con se desconecta,
+     * controls queda en 0.
+     *
+     * Eso hace que el carro deje de
+     * acelerar/girar automáticamente.
+     */
+
+    STM32Serial.write(controls);
+}
